@@ -41,6 +41,15 @@ diskutiert und versioniert werden kann.
 | [TICKET-006](tickets/TICKET-006-technologiebaum.md) | Technologie- & Forschungsbaum pro Fraktion | Entwurf fertig |
 | [TICKET-007](tickets/TICKET-007-bevoelkerung-beduerfnisse.md) | Bevölkerungs- & Bedürfnissystem (Nahrung, Gesundheit, Moral) | Entwurf fertig |
 | [TICKET-008](tickets/TICKET-008-ui-ux-konzept.md) | UI/UX-Konzept für den Simulator | Entwurf fertig |
+| [TICKET-009](tickets/TICKET-009-art-style-hauptticket.md) | Grundlegendes visuelles Design (Art-Style, Hauptticket) – Burntime/Amiga-Stil | Entwurf fertig |
+| [TICKET-010](tickets/TICKET-010-art-genereller-stil.md) | Art-Style: Genereller Stil (Palette, Raster, Dithering) | Entwurf fertig |
+| [TICKET-011](tickets/TICKET-011-art-menues.md) | Art-Style: Menüs | Entwurf fertig |
+| [TICKET-012](tickets/TICKET-012-art-hauptkarte.md) | Art-Style: Hauptkarte | Entwurf fertig |
+| [TICKET-013](tickets/TICKET-013-art-portraets.md) | Art-Style: Porträts | Entwurf fertig |
+| [TICKET-014](tickets/TICKET-014-art-spielfiguren-fraktionen.md) | Art-Style: Spielfiguren – Fraktionen | Entwurf fertig |
+| [TICKET-015](tickets/TICKET-015-art-gebaeude-fraktionen-neutral.md) | Art-Style: Gebäude – Fraktionen & neutral | Entwurf fertig |
+| [TICKET-016](tickets/TICKET-016-art-gegner.md) | Art-Style: Gegner | Entwurf fertig |
+| [TICKET-017](tickets/TICKET-017-art-items-waren.md) | Art-Style: Items / Waren | Entwurf fertig |
 
 Weitere Tickets werden bei Bedarf ergänzt (z. B. Balancing-Iterationen,
-Soundkonzept, konkrete Wireframes).
+Soundkonzept, finale Production-Art auf Basis von TICKET-009 bis -017).
