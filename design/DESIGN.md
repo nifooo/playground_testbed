@@ -34,12 +34,13 @@ diskutiert und versioniert werden kann.
 | Ticket | Thema | Status |
 |---|---|---|
 | [TICKET-001](tickets/TICKET-001-hintergrundgeschichte.md) | Hintergrundgeschichte & Worldbuilding (3. Weltkrieg, Fraktionen) | Entwurf fertig |
-| TICKET-002 | Kartendesign & Regionen (Kontaminationszonen, Bunker-Standorte, Handelsrouten) | Geplant |
-| TICKET-003 | Wirtschaftssystem: Ressourcen, Produktionsketten, Währungen | Geplant |
-| TICKET-004 | Handelssystem zwischen Fraktionen (Preise, Knappheit, Embargos) | Geplant |
-| TICKET-005 | Kampf- & Konfliktsystem (Raids, Verteidigung, Diplomatie) | Geplant |
-| TICKET-006 | Technologie- & Forschungsbaum pro Fraktion | Geplant |
-| TICKET-007 | Bevölkerungs- & Bedürfnissystem (Nahrung, Gesundheit, Moral) | Geplant |
-| TICKET-008 | UI/UX-Konzept für den Simulator | Geplant |
+| [TICKET-002](tickets/TICKET-002-kartendesign-regionen.md) | Kartendesign & Regionen (Kontaminationszonen, Bunker-Standorte, Handelsrouten) | Entwurf fertig |
+| [TICKET-003](tickets/TICKET-003-wirtschaftssystem.md) | Wirtschaftssystem: Ressourcen, Produktionsketten, Währungen | Entwurf fertig |
+| [TICKET-004](tickets/TICKET-004-handelssystem.md) | Handelssystem zwischen Fraktionen (Preise, Knappheit, Embargos) | Entwurf fertig |
+| [TICKET-005](tickets/TICKET-005-kampf-konfliktsystem.md) | Kampf- & Konfliktsystem (Raids, Verteidigung, Diplomatie) | Entwurf fertig |
+| [TICKET-006](tickets/TICKET-006-technologiebaum.md) | Technologie- & Forschungsbaum pro Fraktion | Entwurf fertig |
+| [TICKET-007](tickets/TICKET-007-bevoelkerung-beduerfnisse.md) | Bevölkerungs- & Bedürfnissystem (Nahrung, Gesundheit, Moral) | Entwurf fertig |
+| [TICKET-008](tickets/TICKET-008-ui-ux-konzept.md) | UI/UX-Konzept für den Simulator | Entwurf fertig |
 
-Weitere Tickets werden bei Bedarf ergänzt.
+Weitere Tickets werden bei Bedarf ergänzt (z. B. Balancing-Iterationen,
+Soundkonzept, konkrete Wireframes).
