@@ -327,225 +327,366 @@ def starfield(c: Canvas, x0, y0, x1, y1, rng, density=0.012) -> None:
                 c.set(x, y, "lgrey")
 
 
+
+# --------------------------------------------------------------------------
+# Handgesetzte Gesichtszuege
+# --------------------------------------------------------------------------
+# Brauen, Augen, Nase und Mund werden nicht berechnet, sondern als feste
+# Pixelvorlage gesetzt - nur so bekommen die Gesichter bei 16x16..24x26
+# Kopfgroesse einen lebendigen, nicht "puppenhaften" Ausdruck.
+#   K = schwarz      S = Hautschatten   H = Lichtkante
+#   E = Sklera       P = Pupille        . = unveraendert
+FACE_FEATURES = (
+    ".KKKK.......KKKK.",   # Brauen, aussen abfallend
+    "KSSSK.......KSSSK",   # Oberlidschatten
+    "KEPEK.......KEPEK",   # Augen
+    ".SSK.........KSS.",   # Unterlid / Traenensack
+    "........H........",   # Nasenruecken
+    ".......HS........",
+    ".......HS........",
+    "......KHSK.......",   # Nasenfluegel
+    ".......SS........",   # Schatten unter der Nase
+    ".................",
+    "......KKKKK......",   # Mundlinie
+    "......SHHHS......",   # Unterlippe im Licht
+    ".......SSS.......",   # Schatten darunter
+)
+FEATURE_W = len(FACE_FEATURES[0])
+FEATURE_EYE_ROW = 2        # Zeile, die auf die Augenhoehe ausgerichtet wird
+
+
+def stamp_features(c: Canvas, cx: int, ey: int, skin, squint=False) -> None:
+    """Setzt die Gesichtsvorlage mittig auf (cx, ey)."""
+    tone = {"K": "black", "S": skin[1], "H": "yellow",
+            "E": "lgrey", "P": "black"}
+    x0 = cx - FEATURE_W // 2
+    y0 = ey - FEATURE_EYE_ROW
+    for gy, row in enumerate(FACE_FEATURES):
+        for gx, ch in enumerate(row):
+            if ch == ".":
+                continue
+            if squint and ch in ("E", "P"):
+                ch = "K" if ch == "E" else "P"
+            c.set(x0 + gx, y0 + gy, tone[ch])
+    if not squint:      # ein einzelner Lichtpunkt im linken Auge
+        c.set(x0 + 1, y0 + FEATURE_EYE_ROW, "white")
+
+
 def draw_face(c: Canvas, x, y, w, h, skin=("orange", "brown"),
               hair="brown", cloth=("blue", "lblue"), accent="lgrey",
               headgear=None, third_eye=False, bg=("blue", "black"),
-              aged=False) -> None:
-    """Parametrische Portraet-Bueste mit gerichteter Beleuchtung (oben links).
+              aged=False, gaunt=1.0, stubble=False, scarred=False,
+              mottled=False, pallor=0.0, squint=False, seed=0) -> None:
+    """Portraet-Bueste im Stil von SKALD / Burntime.
 
-    Wird fuer den grossen Dialogkopf, die Panel-Slots und die
-    Einzelportraets verwendet; Detailgrad skaliert mit der Groesse.
+    Kein glatter Puppenkopf, sondern ein Schaedel mit Struktur: harte
+    Licht-/Schattentrennung, tief liegende Augen in dunklen Hoehlen,
+    eingefallene Wangen (``gaunt``), Verwitterung ueber Stoppeln, Narben,
+    Flecken und Falten. Detailgrad skaliert mit der Portraetgroesse.
     """
     x, y, w, h = int(x), int(y), int(w), int(h)
     x1, y1 = x + w - 1, y + h - 1
     cx = x + w // 2
-    detail = w >= 34          # Feindetails nur bei grossen Portraets
-    fine = w >= 70            # Zusaetzliche Details im Dialogformat
-
-    # --- Hintergrund: Gradient + Vignette --------------------------------
-    c.dither(x, y, x1, y1, bg[0], bg[1],
-             lambda px, py: min(1.0, max(0.0, (py - y) / max(1, h) * 1.2)))
-    c.dither(x, y, x1, y1, None, "black",
-             lambda px, py: max(0.0, (abs(px - cx) / (w / 2)) ** 2 * 0.7 - 0.15))
-
-    # --- Kopfgeometrie ----------------------------------------------------
-    hw, hh = int(w * 0.62), int(h * 0.54)
-    hx0 = cx - hw // 2
-    hy0 = y + int(h * 0.09)
-    hx1, hy1 = hx0 + hw - 1, hy0 + hh - 1
-    chin = hy1
-
-    # --- Schultern / Kleidung --------------------------------------------
-    sh_top = y + int(h * 0.74)
-    c.polygon([(x, y1), (x + int(w * 0.16), sh_top - int(h * 0.04)),
-               (cx - int(w * 0.12), sh_top - int(h * 0.07)),
-               (cx + int(w * 0.12), sh_top - int(h * 0.07)),
-               (x1 - int(w * 0.16), sh_top - int(h * 0.04)), (x1, y1)],
-              cloth[0], cloth[1],
-              lambda px, py: max(0.0, 0.75 - 0.9 * (px - x) / w))
-    # Faltenschatten
-    for fx in (x + int(w * 0.22), x1 - int(w * 0.22)):
-        c.line(fx, y1, fx + int(w * 0.05), sh_top, "black")
-    # Kragen
-    c.line(cx - int(w * 0.14), sh_top - int(h * 0.06), cx, sh_top + int(h * 0.06), accent)
-    c.line(cx + int(w * 0.14), sh_top - int(h * 0.06), cx, sh_top + int(h * 0.06), accent)
-
-    # --- Hals mit Kinnschatten -------------------------------------------
-    nk = max(2, int(w * 0.13))
-    c.rect(cx - nk, chin - 2, cx + nk, sh_top, skin[0])
-    # Kinnschatten auf dem Hals
-    c.dither(cx - nk, chin - 2, cx + nk, chin + max(2, int(h * 0.06)),
-             skin[1], "black",
-             lambda px, py: max(0.0, 0.85 - (py - (chin - 2)) / max(1.0, h * 0.08)))
-    # Halsschatten rechts (Lichtrichtung oben links)
-    c.dither(cx + max(0, nk - max(1, nk // 2)), chin - 2, cx + nk, sh_top,
-             None, skin[1], 0.7)
-
-    # --- Kopfgrundform mit gerichteter Beleuchtung ------------------------
-    head = c.mask(lambda d: d.ellipse([hx0, hy0, hx1, hy1], fill=255))
-
-    def lum(px, py):
-        """0 = volles Licht (oben links), 1 = tiefster Schatten."""
-        nx = (px - (hx0 + hw / 2.0)) / (hw / 2.0)
-        ny = (py - (hy0 + hh / 2.0)) / (hh / 2.0)
-        return 0.50 + 0.32 * nx + 0.20 * ny
+    detail = w >= 34           # Einzelportraet und groesser
+    small = w < 50             # wenig Platz -> Effekte ausduennen
+    fine = w >= 70             # Dialogformat
+    rng = random.Random(seed or (w * 131 + h * 17))
 
     def clamp01(v):
         return 0.0 if v < 0 else (1.0 if v > 1 else v)
 
-    c.paint(head, hx0, hy0, hx1, hy1, skin[0])
-    c.paint(head, hx0, hy0, hx1, hy1, None, "yellow",
-            lambda px, py: clamp01((0.36 - lum(px, py)) * 2.6))
-    c.paint(head, hx0, hy0, hx1, hy1, None, skin[1],
-            lambda px, py: clamp01((lum(px, py) - 0.58) * 2.6))
-    c.paint(head, hx0, hy0, hx1, hy1, None, "black",
-            lambda px, py: clamp01((lum(px, py) - 0.86) * 4.0))
+    # --- Hintergrund: Kopf taucht aus dem Schwarz auf ---------------------
+    c.dither(x, y, x1, y1, bg[0], bg[1],
+             lambda px, py: clamp01((py - y) / max(1, h) * 1.7 - 0.1))
+    c.dither(x, y, x1, y1, None, "black",
+             lambda px, py: clamp01((abs(px - cx) / (w / 2.0)) ** 2 * 1.25 - 0.12))
 
-    # --- Gesichtszuege ----------------------------------------------------
-    ey = hy0 + int(hh * 0.48)
+    # --- Schaedelgeometrie -------------------------------------------------
+    hw, hh = int(w * 0.56), int(h * 0.60)
+    hx0 = cx - hw // 2
+    hy0 = y + int(h * 0.08)
+    hx1, hy1 = hx0 + hw - 1, hy0 + hh - 1
+    chin = hy1
+    jaw_y = hy0 + int(hh * 0.56)
+    jaw_w = max(4, int(hw * (0.78 - 0.13 * gaunt)))
+
+    def head_shape(d):
+        # Hirnschaedel breit, Kiefer schmal zulaufend
+        d.ellipse([hx0, hy0, hx1, jaw_y + int(hh * 0.40)], fill=255)
+        d.polygon([(hx0 + 1, jaw_y - 2), (hx1 - 1, jaw_y - 2),
+                   (cx + jaw_w // 2, chin - int(hh * 0.12)),
+                   (cx + jaw_w // 3, chin),
+                   (cx - jaw_w // 3, chin),
+                   (cx - jaw_w // 2, chin - int(hh * 0.12))], fill=255)
+
+    head = c.mask(head_shape)
+    HB = (hx0 - 2, hy0 - 2, hx1 + 2, chin + 2)
+
+    def anat(drawfn, color, t, box=None):
+        """Anatomiedetail, hart auf die Kopfflaeche begrenzt."""
+        m = c.mask(drawfn)
+        fn = t if callable(t) else (lambda _a, _b, _v=t: _v)
+        bx0, by0, bx1, by1 = box or HB
+        for yy in range(max(0, int(by0)), min(c.h - 1, int(by1)) + 1):
+            for xx in range(max(0, int(bx0)), min(c.w - 1, int(bx1)) + 1):
+                if m[xx, yy] and head[xx, yy] and fn(xx, yy) > bayer(xx, yy):
+                    c.set(xx, yy, color)
+
+    # --- Schultern / Kleidung ---------------------------------------------
+    sh_top = y + int(h * 0.76)
+    c.polygon([(x, y1), (x + int(w * 0.14), sh_top - int(h * 0.05)),
+               (cx - int(w * 0.11), sh_top - int(h * 0.08)),
+               (cx + int(w * 0.11), sh_top - int(h * 0.08)),
+               (x1 - int(w * 0.14), sh_top - int(h * 0.05)), (x1, y1)],
+              cloth[0], cloth[1],
+              lambda px, py: max(0.0, 0.62 - 0.95 * (px - x) / w))
+    c.polygon([(x, y1), (x + int(w * 0.14), sh_top - int(h * 0.05)),
+               (cx - int(w * 0.11), sh_top - int(h * 0.08)),
+               (cx + int(w * 0.11), sh_top - int(h * 0.08)),
+               (x1 - int(w * 0.14), sh_top - int(h * 0.05)), (x1, y1)],
+              None, "black",
+              lambda px, py: max(0.0, (px - cx) / (w / 2.0) * 0.9 - 0.25))
+    for fx in (x + int(w * 0.20), x1 - int(w * 0.20)):
+        c.line(fx, y1, fx + int(w * 0.04), sh_top, "black")
+    c.line(cx - int(w * 0.12), sh_top - int(h * 0.07), cx, sh_top + int(h * 0.05), accent)
+    c.line(cx + int(w * 0.12), sh_top - int(h * 0.07), cx, sh_top + int(h * 0.05), accent)
+
+    # --- Hals: sehnig, tief im Schatten ------------------------------------
+    nk = max(2, int(w * 0.11))
+    c.rect(cx - nk, chin - 2, cx + nk, sh_top, skin[0])
+    c.dither(cx - nk, chin - 2, cx + nk, sh_top, None, skin[1], 0.55)
+    c.dither(cx - nk, chin - 2, cx + nk, chin + max(2, int(h * 0.07)),
+             "black", None,
+             lambda px, py: max(0.0, 1.0 - (py - (chin - 2)) / max(1.0, h * 0.09)))
+    c.dither(cx, chin - 2, cx + nk, sh_top, None, "black", 0.5)
+    if detail:   # Sehnen
+        c.vline(cx - nk + 1, chin + 2, sh_top - 1, skin[1])
+        c.vline(cx + 1, chin + 2, sh_top - 1, "black")
+
+    # --- Grundton und harte Lichttrennung ----------------------------------
+    def lum(px, py):
+        nx = (px - cx) / (hw / 2.0)
+        ny = (py - (hy0 + hh / 2.0)) / (hh / 2.0)
+        return 0.44 + 0.42 * nx + 0.16 * ny
+
+    c.paint(head, *HB, skin[0])
+    if pallor:
+        c.paint(head, *HB, None, "lgrey", pallor)
+    c.paint(head, *HB, None, "yellow", lambda px, py: clamp01((0.28 - lum(px, py)) * 7.0))
+    c.paint(head, *HB, None, skin[1], lambda px, py: clamp01((lum(px, py) - 0.52) * 7.0))
+    c.paint(head, *HB, None, "black", lambda px, py: clamp01((lum(px, py) - 0.74) * 7.0))
+
+    # Kieferkante: dunkle Silhouettenlinie gegen den Hintergrund
+    for yy in range(hy0, chin + 1):
+        row = [xx for xx in range(hx0 - 2, hx1 + 3) if head[xx, yy]]
+        if row:
+            c.set(row[0], yy, "black")
+            c.set(row[-1], yy, "black")
+
+    # --- Merkpunkte --------------------------------------------------------
+    brow_y = hy0 + int(hh * 0.40)
+    ey = hy0 + int(hh * 0.47)
     eoff = max(2, int(hw * 0.22))
-    ew = max(0, int(hw * 0.09))        # halbe Augenbreite
+    ew = max(0, int(hw * 0.10))
+    nose_b = ey + max(2, int(hh * 0.17))
+    mouth_y = hy0 + int(hh * 0.75)
+    mw = max(1, int(hw * 0.11))
+    tilt = 1 if (seed % 2 == 0) else -1        # leichte Asymmetrie
 
-    # Augenhoehlen
+    # Schlaefenhoehlen (nur wenn genug Platz ist)
+    for sx in ((-1, 1) if not small else ()):
+        tx = cx + sx * int(hw * 0.40)
+        anat(lambda d, _t=tx: d.ellipse(
+            [_t - int(hw * 0.14), hy0 + int(hh * 0.18),
+             _t + int(hw * 0.14), brow_y + 1], fill=255),
+            skin[1], 0.55)
+
+    # Augenhoehlen - der wichtigste Strukturschatten
+    for sx in (-1, 1):
+        exc = cx + sx * eoff
+        anat(lambda d, _e=exc: d.ellipse(
+            [_e - ew - max(1, int(hw * 0.10)), ey - max(1, int(hh * 0.06)),
+             _e + ew + max(1, int(hw * 0.08)), ey + max(2, int(hh * 0.08))], fill=255),
+            "black", 0.55 if detail else 0.45)
+
+    # Eingefallene Wangen: schraege Hoehle unter dem Jochbein
+    for sx in (-1, 1):
+        chx = cx + sx * int(hw * 0.30)
+        chy = ey + int(hh * 0.20)
+        anat(lambda d, _x=chx, _y=chy, _s=sx: d.polygon(
+            [(_x - _s * int(hw * 0.20), _y),
+             (_x + _s * int(hw * 0.16), _y + int(hh * 0.06)),
+             (cx + _s * int(hw * 0.16), mouth_y + int(hh * 0.04)),
+             (cx + _s * int(hw * 0.06), mouth_y + int(hh * 0.02))], fill=255),
+            skin[1], clamp01(0.60 * gaunt))
+        if not small:
+            anat(lambda d, _x=chx, _y=chy, _s=sx: d.polygon(
+                [(_x - _s * int(hw * 0.14), _y + 1),
+                 (_x + _s * int(hw * 0.10), _y + int(hh * 0.06)),
+                 (cx + _s * int(hw * 0.14), mouth_y),
+                 (cx + _s * int(hw * 0.08), mouth_y - int(hh * 0.02))], fill=255),
+                "black", clamp01(0.42 * gaunt))
+
+    # Jochbeinkante darueber aufhellen
     if detail:
         for sx in (-1, 1):
-            c.ellipse(cx + sx * eoff - ew - 1, ey - max(1, int(hh * 0.05)),
-                      cx + sx * eoff + ew + 1, ey + max(1, int(hh * 0.05)),
-                      None, skin[1], 0.5)
+            jx = cx + sx * int(hw * 0.30)
+            anat(lambda d, _x=jx: d.ellipse(
+                [_x - int(hw * 0.16), ey + int(hh * 0.08),
+                 _x + int(hw * 0.16), ey + int(hh * 0.20)], fill=255),
+                "yellow", 0.45 if sx < 0 else 0.15)
 
-    # Brauen: kurz, leicht schraeg
-    for sx in (-1, 1):
-        bx = cx + sx * eoff
-        by = ey - max(2, int(hh * 0.10))
-        c.hline(bx - ew, bx + ew, by, hair)
-        if detail:
-            c.set(bx - sx * (ew + 1), by + 1, hair)
-
-    # Augen
-    for sx in (-1, 1):
-        ex = cx + sx * eoff
-        if detail:
-            c.hline(ex - ew, ex + ew, ey, "white")
-            c.set(ex, ey, "black")
-            if ew >= 2:
-                c.set(ex - 1, ey, "lblue")
-            c.set(ex - ew - 1, ey, skin[1])
-            c.set(ex + ew + 1, ey, skin[1])
-        else:
-            c.set(ex, ey, "white")
-            c.set(ex, ey + 1, "black")
-
-    # Nase: kurze Lichtkante, Schatten rechts daneben
-    nose_b = ey + max(2, int(hh * 0.16))
-    c.vline(cx - 1, ey + 1, nose_b, "yellow" if detail else skin[0])
-    c.vline(cx, ey + 1, nose_b, skin[1])
+    # Kinnlicht und Kieferschatten
     if detail:
-        c.set(cx + 1, nose_b, skin[1])
-        c.set(cx - 2, nose_b, skin[1])
+        anat(lambda d: d.ellipse([cx - int(hw * 0.14), chin - int(hh * 0.13),
+                                  cx + int(hw * 0.10), chin - int(hh * 0.04)],
+                                 fill=255), "yellow", 0.4)
+        anat(lambda d: d.rectangle([hx0, chin - int(hh * 0.05), hx1, chin + 2],
+                                   fill=255), "black", 0.45)
 
-    # Wangenknochen-Glanz links
-    if detail:
-        c.ellipse(hx0 + int(hw * 0.10), ey + max(1, int(hh * 0.10)),
-                  hx0 + int(hw * 0.32), ey + max(3, int(hh * 0.24)),
-                  None, "yellow", 0.35)
-
-    # Mund
-    mouth_y = hy0 + int(hh * 0.78)
-    mw = max(1, int(hw * 0.16))
-    c.hline(cx - mw, cx + mw, mouth_y, "red")
-    if detail:
-        c.hline(cx - mw + 1, cx + mw - 1, mouth_y + 1, skin[1])
-
-    # Kinnlicht
-    if detail:
-        c.hline(cx - 2, cx + 1, chin - max(2, int(hh * 0.10)), "yellow")
-
-    # Altersfalten
+    # --- Verwitterung ------------------------------------------------------
     if aged and detail:
-        c.hline(cx - int(hw * 0.20), cx + int(hw * 0.10), hy0 + int(hh * 0.26), skin[1])
-        c.hline(cx - int(hw * 0.16), cx + int(hw * 0.08), hy0 + int(hh * 0.33), skin[1])
-        for sx in (-1, 1):
-            c.line(cx + sx * int(hw * 0.24), ey + int(hh * 0.14),
-                   cx + sx * int(hw * 0.30), ey + int(hh * 0.26), skin[1])
+        for i, fy_ in enumerate((0.24,)):
+            yy = hy0 + int(hh * fy_)
+            off = rng.randint(-2, 2)
+            c.hline(cx - int(hw * (0.22 - i * 0.05)) + off,
+                    cx + int(hw * (0.14 - i * 0.04)) + off, yy, skin[1])
+            c.set(cx - int(hw * (0.22 - i * 0.05)) + off - 1, yy, "black")
+        for sx in (-1, 1):   # Nasolabialfalten
+            c.line(cx + sx * int(hw * 0.14), nose_b,
+                   cx + sx * int(hw * 0.26), mouth_y + int(hh * 0.04), skin[1])
 
-    # --- Drittes Auge (Mutierte) -----------------------------------------
+    if stubble and detail and not small:
+        anat(lambda d: d.ellipse(
+            [cx - int(hw * 0.42), mouth_y + 1,
+             cx + int(hw * 0.42), chin + 2], fill=255), "black", 0.22)
+
+    if mottled and detail:
+        for _ in range(max(2, int(hw * 0.09))):
+            mx = rng.randint(hx0 + 1, hx1 - 1)
+            my = rng.randint(brow_y, mouth_y)
+            r = rng.randint(1, max(1, int(hw * 0.05)))
+            tone = "green" if rng.random() < 0.5 else "dgrey"
+            anat(lambda d, _x=mx, _y=my, _r=r: d.ellipse(
+                [_x - _r, _y - _r, _x + _r, _y + _r], fill=255), tone, 0.22)
+
+    if scarred and detail:
+        sx0 = cx + tilt * int(hw * 0.12)
+        sy0 = brow_y - int(hh * 0.10)
+        sx1_ = cx + tilt * int(hw * 0.40)
+        sy1_ = ey + int(hh * 0.18)
+        c.line(sx0, sy0, sx1_, sy1_, "lred")
+        c.line(sx0 + tilt, sy0, sx1_ + tilt, sy1_, "black")
+
+    # Hautstruktur: sparsames Rauschen statt glatter Flaeche
+    if detail:
+        anat(lambda d: d.rectangle([hx0, hy0, hx1, chin], fill=255),
+             skin[1], 0.04)
+
+    # --- Gesichtszuege aus der handgesetzten Vorlage ---------------------
+    stamp_features(c, cx, ey, skin, squint=squint)
+
+    # --- Drittes Auge (Mutierte): eigene Hoehle, senkrechte Pupille --------
     if third_eye:
-        ty = hy0 + int(hh * 0.26)
-        tw = max(1, int(hw * 0.08))
-        c.hline(cx - tw - 1, cx + tw + 1, ty - 1, hair)
-        c.hline(cx - tw, cx + tw, ty, "lgreen")
-        c.set(cx, ty, "white")
-        c.hline(cx - tw, cx + tw, ty + 1, skin[1])
+        ty = hy0 + int(hh * 0.25)
+        tw = max(1, int(hw * 0.06))
+        anat(lambda d: d.ellipse([cx - tw - 2, ty - tw - 1, cx + tw + 2, ty + tw + 1],
+                                 fill=255), "black", 0.75)
+        c.hline(cx - tw, cx + tw, ty, "black")
+        c.set(cx, ty, "green")
+        if detail:
+            c.vline(cx, ty - 1, ty + 1, "black")
+            c.set(cx, ty, "lgreen")
+            c.hline(cx - tw - 1, cx + tw + 1, ty - tw - 1, hair)
+            c.hline(cx - tw, cx + tw, ty + 1, skin[1])
 
-    # --- Haare ------------------------------------------------------------
+    # --- Haare: unregelmaessige Masse, bei Alter zurueckweichend ----------
     if headgear not in ("helmet", "hood"):
-        top = hy0 + int(hh * (0.34 if not third_eye else 0.18))
+        hair_col = "grey" if aged else hair
+        top = hy0 + int(hh * (0.30 if not aged else 0.20))
+        if third_eye:
+            top = hy0 + int(hh * 0.15)
         cap = c.mask(lambda d: d.ellipse(
-            [hx0 - 1, hy0 - max(1, int(hh * 0.08)), hx1 + 1, hy0 + int(hh * 0.90)],
+            [hx0 - 2, hy0 - max(2, int(hh * 0.09)), hx1 + 2, hy0 + int(hh * 0.95)],
             fill=255))
-        c.paint(cap, hx0 - 1, hy0 - 2, hx1 + 1, top, "lgrey" if aged else hair,
-                "black", 0.30)
-        # Lichtkante der Frisur
-        c.paint(cap, hx0 - 1, hy0 - 2, hx1 + 1, top, None,
-                "white" if aged else "brown",
-                lambda px, py: clamp01((0.34 - lum(px, py)) * 2.2))
-        # Schlaefenpartien, nur innerhalb der Kopfbreite
+        c.paint(cap, hx0 - 2, hy0 - 3, hx1 + 2, top, hair_col, "black",
+                0.50 if aged else 0.40)
+        c.paint(cap, hx0 - 2, top - max(1, int(hh * 0.05)), hx1 + 2, top,
+                None, "black", 0.6)
+        c.paint(cap, hx0 - 2, hy0 - 3, hx1 + 2, top, None,
+                "lgrey" if aged else "black",
+                lambda px, py: clamp01((0.30 - lum(px, py)) * 2.0))
+        # Geheimratsecken
+        if aged and detail:
+            for sx in (-1, 1):
+                ax = cx + sx * int(hw * 0.14)
+                bx = cx + sx * int(hw * 0.52)
+                anat(lambda d, _a=min(ax, bx), _b=max(ax, bx): d.ellipse(
+                    [_a, hy0 - 2, _b, hy0 + int(hh * 0.22)], fill=255),
+                    skin[1], 0.7)
+        # Schlaefenpartien
         for sx in (-1, 1):
-            sxx = cx + sx * int(hw * 0.46)
-            c.paint(cap, min(sxx, sxx + sx * 2), top,
-                    max(sxx, sxx + sx * 2), hy0 + int(hh * 0.62),
-                    "lgrey" if aged else hair, "black", 0.5)
-        if fine:  # Straehnen
-            for i in range(5):
-                sx0 = hx0 + int(hw * (0.18 + i * 0.16))
-                c.line(sx0, hy0 - 1, sx0 - 2, top - 2, "black")
+            sxx = cx + sx * int(hw * 0.44)
+            c.paint(cap, min(sxx, sxx + sx * 3), top - 2,
+                    max(sxx, sxx + sx * 3), hy0 + int(hh * (0.70 if not aged else 0.58)),
+                    hair_col, "black", 0.5)
+        if fine:   # Straehnen, ungleichmaessig
+            for i in range(7):
+                sx0 = hx0 + int(hw * (0.10 + i * 0.13))
+                c.line(sx0, hy0 - 2, sx0 - rng.randint(1, 3), top - 1, "black")
 
-    # --- Kopfbedeckung ----------------------------------------------------
+    # --- Kopfbedeckung ------------------------------------------------------
     if headgear == "helmet":
+        brim = hy0 + int(hh * 0.22)
         hm = c.mask(lambda d: d.ellipse(
-            [hx0 - 3, hy0 - max(3, int(hh * 0.14)), hx1 + 3, hy0 + int(hh * 0.60)],
+            [hx0 - 3, hy0 - max(2, int(hh * 0.10)), hx1 + 3, hy0 + int(hh * 0.48)],
             fill=255))
-        brim = hy0 + int(hh * 0.30)
-        c.paint(hm, hx0 - 3, hy0 - 4, hx1 + 3, brim, "grey")
-        c.paint(hm, hx0 - 3, hy0 - 4, hx1 + 3, brim, None, "lgrey",
-                lambda px, py: max(0.0, 0.9 - (px - hx0) / hw * 1.3 - (py - hy0 + 4) / hh))
-        c.paint(hm, hx0 - 3, hy0 - 4, hx1 + 3, brim, None, "dgrey",
-                lambda px, py: max(0.0, (px - hx0) / hw * 1.2 - 0.55))
+        c.paint(hm, hx0 - 3, hy0 - 5, hx1 + 3, brim, "grey")
+        c.paint(hm, hx0 - 3, hy0 - 5, hx1 + 3, brim, None, "lgrey",
+                lambda px, py: clamp01((0.32 - lum(px, py)) * 2.6))
+        c.paint(hm, hx0 - 3, hy0 - 5, hx1 + 3, brim, None, "dgrey",
+                lambda px, py: clamp01((lum(px, py) - 0.55) * 2.8))
+        c.paint(hm, hx0 - 3, hy0 - 5, hx1 + 3, brim, None, "black",
+                lambda px, py: clamp01((lum(px, py) - 0.80) * 3.4))
         c.hline(hx0 - 3, hx1 + 3, brim, "black")
         c.hline(hx0 - 2, hx1 + 2, brim - 1, "lgrey")
-        if detail:   # Stirnwulst / Rangpunkt
-            c.set(cx + int(hw * 0.28), hy0 + int(hh * 0.12), "lred")
+        # Schatten des Helmrands auf der Stirn
+        anat(lambda d: d.rectangle([hx0, brim + 1, hx1, brim + max(2, int(hh * 0.09))],
+                                   fill=255), "black", 0.5)
+        if detail:
+            c.set(cx + int(hw * 0.26), hy0 + int(hh * 0.10), "lred")
     elif headgear == "hood":
-        c.polygon([(hx0 - 4, y1), (hx0 - 4, hy0 + int(hh * 0.30)),
-                   (cx - int(hw * 0.30), hy0 - int(hh * 0.16)),
-                   (cx + int(hw * 0.30), hy0 - int(hh * 0.16)),
-                   (hx1 + 4, hy0 + int(hh * 0.30)), (hx1 + 4, y1)],
+        # Gesicht sichern, Kapuze darueber zeichnen, Oeffnung wiederherstellen
+        snap = c.img.copy().load()
+        c.polygon([(hx0 - 5, y1), (hx0 - 5, hy0 + int(hh * 0.26)),
+                   (cx - int(hw * 0.26), hy0 - int(hh * 0.20)),
+                   (cx + int(hw * 0.26), hy0 - int(hh * 0.20)),
+                   (hx1 + 5, hy0 + int(hh * 0.26)), (hx1 + 5, y1)],
                   "brown", "black",
-                  lambda px, py: max(0.0, (px - hx0) / hw * 1.1 - 0.25))
-        # Kapuzenoeffnung wieder freistellen
-        face = c.mask(lambda d: d.ellipse(
-            [hx0 + 1, hy0 + int(hh * 0.06), hx1 - 1, hy1 + 2], fill=255))
-        c.paint(face, hx0, hy0, hx1, hy1 + 2, skin[0])
-        c.paint(face, hx0, hy0, hx1, hy1 + 2, None, skin[1],
-                lambda px, py: max(0.0, (px - hx0) / hw * 1.2 + (py - hy0) / hh * 0.5 - 0.5))
-        c.paint(face, hx0, hy0, hx1, hy1 + 2, None, "black",
-                lambda px, py: max(0.0, 0.55 - (py - hy0) / hh * 2.0))
-        c.paint(face, hx0, hy0, hx1, hy1 + 2, None, "yellow",
-                lambda px, py: max(0.0, 0.5 - (px - hx0) / hw * 1.3
-                                  - abs(py - (hy0 + hh * 0.55)) / hh * 1.2))
-        # Gesichtszuege erneut setzen (Kapuze hat sie ueberzeichnet)
-        for sx in (-1, 1):
-            ex = cx + sx * eoff
-            c.hline(ex - 1, ex + 1, ey, "white") if detail else c.set(ex, ey, "white")
-            c.set(ex, ey, "black")
-            c.hline(ex - max(1, int(hw * 0.12)), ex + max(1, int(hw * 0.10)),
-                    ey - max(2, int(hh * 0.10)), "black")
-        c.vline(cx - 1, ey, nose_b, "yellow" if detail else skin[0])
-        c.vline(cx, ey, nose_b, skin[1])
-        c.hline(cx - mw, cx + mw, mouth_y, "red")
-        # Kapuzensaum
-        c.line(hx0 - 1, hy0 + int(hh * 0.34), cx, hy0 - int(hh * 0.06), "orange")
-        c.line(hx1 + 1, hy0 + int(hh * 0.34), cx, hy0 - int(hh * 0.06), "orange")
+                  lambda px, py: clamp01((px - hx0) / hw * 1.2 - 0.20))
+        opening = c.mask(lambda d: d.ellipse(
+            [hx0 + 1, hy0 + int(hh * 0.08), hx1 - 1, chin + 1], fill=255))
+        for yy in range(max(0, hy0), min(c.h - 1, chin + 2) + 1):
+            for xx in range(max(0, hx0), min(c.w - 1, hx1) + 1):
+                if opening[xx, yy] and head[xx, yy]:
+                    c.px[xx, yy] = snap[xx, yy]
+        # Kapuze wirft Schatten auf die obere Gesichtshaelfte
+        for yy in range(max(0, hy0), min(c.h - 1, brow_y + 1) + 1):
+            for xx in range(max(0, hx0), min(c.w - 1, hx1) + 1):
+                if opening[xx, yy] and head[xx, yy] and \
+                        clamp01(0.70 - (yy - hy0) / max(1.0, hh * 0.40)) > bayer(xx, yy):
+                    c.set(xx, yy, "black")
+        # Dunkler Innenrand der Kapuze
+        rim = c.mask(lambda d: d.ellipse(
+            [hx0 - 1, hy0 + int(hh * 0.05), hx1 + 1, chin + 2], outline=255, width=2))
+        for yy in range(max(0, hy0), min(c.h - 1, chin + 3) + 1):
+            for xx in range(max(0, hx0 - 2), min(c.w - 1, hx1 + 2) + 1):
+                if rim[xx, yy]:
+                    c.set(xx, yy, "black")
+        stamp_features(c, cx, ey, skin, squint=squint)
+        # Kapuzensaum als Lichtkante
+        c.line(hx0 - 2, hy0 + int(hh * 0.30), cx, hy0 - int(hh * 0.16), "orange")
+        c.line(hx1 + 2, hy0 + int(hh * 0.30), cx, hy0 - int(hh * 0.16), "brown")
 
 
 # --------------------------------------------------------------------------
@@ -871,12 +1012,18 @@ def gen_screen() -> None:
     px0, py0 = 220, 16
     cellw, cellh = 45, 32
     faces = [
-        dict(cloth=("blue", "lblue"), hair="dgrey", headgear="helmet", accent="lgrey"),
-        dict(cloth=("blue", "lblue"), hair="brown", accent="lgrey"),
-        dict(cloth=("green", "lgreen"), hair="brown", third_eye=True, accent="yellow"),
-        dict(cloth=("green", "lgreen"), hair="dgrey", third_eye=True, accent="yellow"),
-        dict(cloth=("brown", "orange"), hair="brown", headgear="hood", accent="red"),
-        dict(cloth=("brown", "orange"), hair="black", accent="red"),
+        dict(cloth=("blue", "lblue"), hair="dgrey", headgear="helmet",
+             accent="lgrey", pallor=0.2, squint=True, seed=1),
+        dict(cloth=("blue", "lblue"), hair="brown", accent="lgrey",
+             pallor=0.25, gaunt=1.1, scarred=True, seed=2),
+        dict(cloth=("green", "lgreen"), hair="dgrey", third_eye=True,
+             accent="yellow", gaunt=1.4, mottled=True, seed=3),
+        dict(cloth=("green", "lgreen"), hair="brown", third_eye=True,
+             accent="yellow", gaunt=1.3, aged=True, seed=4),
+        dict(cloth=("brown", "orange"), hair="brown", headgear="hood",
+             accent="red", gaunt=1.2, stubble=True, seed=5),
+        dict(cloth=("brown", "orange"), hair="black", accent="red",
+             gaunt=1.2, stubble=True, scarred=True, squint=True, seed=6),
     ]
     for i, cfg in enumerate(faces):
         fx = px0 + (i % 2) * (cellw + 3)
@@ -931,28 +1078,38 @@ def gen_dialog() -> None:
 
     plate(c, w // 2, 10, "SIPPENAELTESTE DER BITTERGRABEN", bg="brown", fg="yellow")
 
-    # Grosses Portraet links
-    draw_face(c, 12, 28, 104, 126,
+    # Grosses Portraet links: dasselbe 40x48-Bildnis wie die Portraetdateien,
+    # ganzzahlig auf 2x vergroessert (Nahaufnahme, identische Kunst)
+    bust = Canvas(40, 48, "black")
+    draw_face(bust, 1, 1, 38, 46,
               skin=("orange", "brown"), hair="dgrey",
               cloth=("green", "lgreen"), accent="yellow", third_eye=True,
-              bg=("blue", "black"))
-    c.frame(11, 27, 116, 154, "lgrey")
-    c.frame(12, 28, 115, 153, "black")
+              bg=("blue", "black"), aged=True, gaunt=1.5, mottled=True,
+              scarred=True, seed=11)
+    big = bust.img.resize((80, 96), Image.NEAREST)
+    c.img.paste(big, (14, 30))
+    c.frame(12, 28, 95, 127, "lgrey")
+    c.frame(13, 29, 94, 126, "black")
+    # Namensschild unter dem Portraet
+    c.rect(12, 131, 95, 143, "brown")
+    c.frame(12, 131, 95, 143, "lgrey")
+    c.text_centered(53, 135, "MUTTER KATRAN", "yellow", shadow="black")
 
     # Textfeld rechts
-    tx0, ty0, tx1, ty1 = 124, 28, 308, 154
+    tx0, ty0, tx1, ty1 = 100, 28, 308, 154
     c.dither(tx0, ty0, tx1, ty1, "black", "blue", 0.18)
     c.frame(tx0, ty0, tx1, ty1, "lgrey")
     c.frame(tx0 + 1, ty0 + 1, tx1 - 1, ty1 - 1, "dgrey")
     text_lines = [
-        "IHR KOMMT VOM NORDBERG,",
-        "DAS RIECHT MAN. EURE",
-        "WERKZEUGE HALTEN LAENGER",
-        "ALS UNSERE HAENDE.",
+        "IHR KOMMT VOM NORDBERG, DAS",
+        "RIECHT MAN. EURE WERKZEUGE",
+        "HALTEN LAENGER ALS UNSERE",
+        "HAENDE - UND UNSERE HAENDE",
+        "SIND BESSER ALS EURE.",
         "",
-        "WIR GEBEN EUCH KRAUT",
-        "GEGEN STAHL. ZWEI KISTEN",
-        "FUER ZEHN KLINGEN.",
+        "WIR GEBEN EUCH KRAUT GEGEN",
+        "STAHL. ZWEI KISTEN FUER",
+        "ZEHN KLINGEN, NICHT WENIGER.",
         "",
         "DER GRABEN VERGISST NICHT,",
         "WER FAIR TEILT.",
@@ -1102,15 +1259,21 @@ def gen_scene_bastion() -> None:
 # --------------------------------------------------------------------------
 def gen_portraits() -> None:
     specs = [
+        # Bunker: blass vom Leben unter Tage, diszipliniert, hartaeugig
         ("06a_portrait_bunker.png", dict(
             skin=("orange", "brown"), hair="dgrey", cloth=("blue", "lblue"),
-            accent="lgrey", headgear="helmet", bg=("blue", "black"))),
+            accent="lgrey", headgear="helmet", bg=("blue", "black"),
+            pallor=0.22, gaunt=0.9, scarred=True, seed=3)),
+        # Mutierte: ausgezehrt, fleckige Haut, drittes Auge
         ("06b_portrait_mutant.png", dict(
-            skin=("orange", "brown"), hair="brown", cloth=("green", "lgreen"),
-            accent="yellow", third_eye=True, bg=("blue", "black"))),
+            skin=("orange", "brown"), hair="dgrey", cloth=("green", "lgreen"),
+            accent="yellow", third_eye=True, bg=("blue", "black"),
+            gaunt=1.5, mottled=True, seed=6)),
+        # Wastelander: sonnenverbrannt, stoppelig, vernarbt
         ("06c_portrait_wastelander.png", dict(
             skin=("orange", "brown"), hair="brown", cloth=("brown", "orange"),
-            accent="red", headgear="hood", bg=("blue", "black"))),
+            accent="red", headgear="hood", bg=("blue", "black"),
+            gaunt=1.2, stubble=True, scarred=True, seed=9)),
     ]
     for name, cfg in specs:
         c = Canvas(40, 48, "black")
