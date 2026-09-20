@@ -8,6 +8,14 @@
 Stilregeln), TICKET-008 (UI/UX-Bildschirmstruktur)
 **Geschwistertickets:** TICKET-012 bis TICKET-017
 
+> **Stilrevision (2026-09-20):** Verbindliche Stilreferenz ist ab sofort der
+> C64-Look von *SKALD – Against the Black Priory*: 16-Farben-VIC-II-Palette,
+> durchgängiges Bayer-Dithering, tiefschwarze Hintergründe. Die Struktur-,
+> Raster- und Systemfestlegungen dieses Tickets gelten unverändert weiter;
+> geändert haben sich Palette und Schattierungstechnik (Begründung und
+> Regeln: TICKET-009, Abschnitt 20). Aktueller Asset-Satz:
+> `design/assets/artstyle-c64/`, Generator: `tools/gen_assets_c64.py`.
+
 ## Ziel des Tickets
 
 Visuelle Ausarbeitung aller Menü- und Dialogflächen im Burntime-inspirierten
@@ -328,6 +336,10 @@ beschriebenen Sprite- und Icon-Stil abweicht.
 - [x] Statusanzeigen und Benachrichtigungsfenster im Retro-Stil beschrieben.
 - [x] Umfang mindestens 2000 Wörter.
 
-## Beispielgrafik
+## Beispielgrafiken (C64-Stilrevision)
 
-![Dialogmenü Mockup](../assets/artstyle/08_menue_dialog.png)
+Vorschau (hochskaliert); native Pixeldateien liegen unter
+`design/assets/artstyle-c64/native/`.
+
+![Spielbildschirm](../assets/artstyle-c64/03_spielbildschirm.png)
+![Dialogszene](../assets/artstyle-c64/04_dialogszene.png)

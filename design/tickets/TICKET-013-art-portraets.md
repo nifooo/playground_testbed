@@ -9,6 +9,14 @@ Stilregeln), TICKET-001 (Fraktionen/Mutationen), TICKET-011 (Menü-/
 Dialogsystem)
 **Geschwistertickets:** TICKET-012, TICKET-014 bis TICKET-017
 
+> **Stilrevision (2026-09-20):** Verbindliche Stilreferenz ist ab sofort der
+> C64-Look von *SKALD – Against the Black Priory*: 16-Farben-VIC-II-Palette,
+> durchgängiges Bayer-Dithering, tiefschwarze Hintergründe. Die Struktur-,
+> Raster- und Systemfestlegungen dieses Tickets gelten unverändert weiter;
+> geändert haben sich Palette und Schattierungstechnik (Begründung und
+> Regeln: TICKET-009, Abschnitt 20). Aktueller Asset-Satz:
+> `design/assets/artstyle-c64/`, Generator: `tools/gen_assets_c64.py`.
+
 ## Ziel des Tickets
 
 Visuelle Ausarbeitung der Dialogporträts (Büsten), die im Menü-/
@@ -323,8 +331,12 @@ grundlegenden Neuentwurf des gesamten Porträtsystems zwingen.
 - [x] Baukastensystem für Bevölkerungsvielfalt skizziert.
 - [x] Umfang mindestens 2000 Wörter.
 
-## Beispielgrafiken
+## Beispielgrafiken (C64-Stilrevision)
 
-![Porträt Bunker](../assets/artstyle/03a_portrait_bunker.png)
-![Porträt Mutierte](../assets/artstyle/03b_portrait_mutant.png)
-![Porträt Wastelander](../assets/artstyle/03c_portrait_wastelander.png)
+Vorschau (hochskaliert); native Pixeldateien liegen unter
+`design/assets/artstyle-c64/native/`.
+
+![Porträt Bunker](../assets/artstyle-c64/06a_portrait_bunker.png)
+![Porträt Mutierte](../assets/artstyle-c64/06b_portrait_mutant.png)
+![Porträt Wastelander](../assets/artstyle-c64/06c_portrait_wastelander.png)
+![Porträt im Dialogkontext](../assets/artstyle-c64/04_dialogszene.png)

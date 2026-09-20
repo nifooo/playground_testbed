@@ -1,19 +1,17 @@
 """
-Endzeit-Wirtschaftssimulator – Bewegungs-Prototyp.
+Endzeit-Wirtschaftssimulator - Bewegungs-Prototyp.
 
-Minimaler Prototyp gemäß erster Prototyping-Anforderung: eine Spielfigur
-wird mit WASD über die Hauptkarte bewegt. Keine Interaktion, keine
-Animation. Rendering folgt den Regeln aus TICKET-009/-010: native
-Pixelauflösung, ganzzahlige Skalierung, Nearest-Neighbor (harte Kanten).
+Minimaler Prototyp: eine Spielfigur wird mit WASD ueber die Hauptkarte
+bewegt. Keine Interaktion, keine Animation. Rendering folgt den Regeln aus
+TICKET-009/-010 in der C64-Stilrevision: native Pixelaufloesung, striktes
+Nearest-Neighbor, ganzzahlige Skalierung.
 
 Steuerung:
-    W/A/S/D  – Figur bewegen (Pfeiltasten gehen auch)
-    ESC      – Beenden
+    W/A/S/D  - Figur bewegen (Pfeiltasten gehen auch)
+    ESC      - Beenden
 
-Die Karte und der Figuren-Sprite werden aus design/assets/artstyle/
-geladen (die dort abgelegten Mockups sind bereits 6x skaliert; wir
-rechnen sie auf die native Auflösung herunter und skalieren dann als
-Ganzes wieder hoch, damit Figur und Karte im selben Pixelraster liegen).
+Karte und Figur werden direkt in nativer Aufloesung aus
+design/assets/artstyle-c64/native/ geladen.
 """
 
 import sys
@@ -21,42 +19,33 @@ from pathlib import Path
 
 import pygame
 
-# Die Mockups in design/assets/artstyle wurden mit SCALE=6 exportiert.
-ASSET_SCALE = 6
 # Anzeige-Skalierung des nativen Bildes (ganzzahlig, TICKET-009 Abschnitt 2).
-DISPLAY_SCALE = 5
+DISPLAY_SCALE = 4
 # Bewegungsgeschwindigkeit in nativen Pixeln pro Sekunde.
-SPEED = 60
+SPEED = 48
 
-ASSET_DIR = Path(__file__).resolve().parent.parent / "design" / "assets" / "artstyle"
+ASSET_DIR = (Path(__file__).resolve().parent.parent
+             / "design" / "assets" / "artstyle-c64" / "native")
 MAP_FILE = ASSET_DIR / "02_hauptkarte.png"
-SPRITE_FILE = ASSET_DIR / "04c_sprite_wastelander.png"
-
-
-def load_native(path: Path) -> pygame.Surface:
-    """Lädt ein 6x-Mockup und rechnet es verlustfrei auf native Größe herunter."""
-    image = pygame.image.load(str(path))
-    native_size = (image.get_width() // ASSET_SCALE, image.get_height() // ASSET_SCALE)
-    # subsample statt smoothscale: harte Pixelkanten bleiben erhalten
-    return pygame.transform.scale(image, native_size)
+SPRITE_FILE = ASSET_DIR / "07c_sprite_wastelander.png"
 
 
 def main() -> None:
     pygame.init()
-    pygame.display.set_caption("Endzeit-Prototyp – WASD bewegt die Figur")
+    pygame.display.set_caption("Endzeit-Prototyp - WASD bewegt die Figur")
 
-    world = load_native(MAP_FILE).convert()
-    sprite = load_native(SPRITE_FILE).convert()
-    # Der Sprite-Mockup hat einen near-black Hintergrund; als transparent markieren.
-    sprite.set_colorkey(sprite.get_at((0, 0)))
+    world = pygame.image.load(str(MAP_FILE))
+    sprite = pygame.image.load(str(SPRITE_FILE))
 
     screen = pygame.display.set_mode(
-        (world.get_width() * DISPLAY_SCALE, world.get_height() * DISPLAY_SCALE)
-    )
+        (world.get_width() * DISPLAY_SCALE, world.get_height() * DISPLAY_SCALE))
+    world = world.convert()
+    sprite = sprite.convert_alpha()   # Assets tragen einen echten Alphakanal
+
     canvas = pygame.Surface(world.get_size())
     clock = pygame.time.Clock()
 
-    # Startposition: Kartenmitte, Position in floats für gleichmäßige Bewegung.
+    # Startposition: Kartenmitte, Position in floats fuer gleichmaessige Bewegung.
     x = world.get_width() / 2 - sprite.get_width() / 2
     y = world.get_height() / 2 - sprite.get_height() / 2
 

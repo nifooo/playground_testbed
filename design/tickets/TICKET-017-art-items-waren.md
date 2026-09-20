@@ -9,6 +9,14 @@ Stilregeln), TICKET-003 (Ressourcen/Produktionsketten), TICKET-004
 (Handelsgüter)
 **Geschwistertickets:** TICKET-011 bis TICKET-016
 
+> **Stilrevision (2026-09-20):** Verbindliche Stilreferenz ist ab sofort der
+> C64-Look von *SKALD – Against the Black Priory*: 16-Farben-VIC-II-Palette,
+> durchgängiges Bayer-Dithering, tiefschwarze Hintergründe. Die Struktur-,
+> Raster- und Systemfestlegungen dieses Tickets gelten unverändert weiter;
+> geändert haben sich Palette und Schattierungstechnik (Begründung und
+> Regeln: TICKET-009, Abschnitt 20). Aktueller Asset-Satz:
+> `design/assets/artstyle-c64/`, Generator: `tools/gen_assets_c64.py`.
+
 ## Ziel des Tickets
 
 Visuelle Ausarbeitung der Item- und Waren-Icons im 16×16-Grundraster
@@ -331,11 +339,16 @@ Governance-Regel, wonach Änderungen an der projektweiten Basispalette nur
 - [x] Währungssymbole für alle vier Systeme aus TICKET-003 beschrieben.
 - [x] Umfang mindestens 2000 Wörter.
 
-## Beispielgrafiken
+## Beispielgrafiken (C64-Stilrevision)
 
-![Item Werkzeug](../assets/artstyle/07a_item_werkzeug.png)
-![Item Waffe](../assets/artstyle/07b_item_waffe.png)
-![Item Medizin](../assets/artstyle/07c_item_medizin.png)
-![Item Nahrung](../assets/artstyle/07d_item_nahrung.png)
-![Item Erz](../assets/artstyle/07e_item_erz.png)
-![Item Talon](../assets/artstyle/07f_item_talon.png)
+Vorschau (hochskaliert); native Pixeldateien liegen unter
+`design/assets/artstyle-c64/native/`.
+
+![Item Werkzeug](../assets/artstyle-c64/10a_item_werkzeug.png)
+![Item Waffe](../assets/artstyle-c64/10b_item_waffe.png)
+![Item Medizin](../assets/artstyle-c64/10c_item_medizin.png)
+![Item Nahrung](../assets/artstyle-c64/10d_item_nahrung.png)
+![Item Erz](../assets/artstyle-c64/10e_item_erz.png)
+![Item Talon](../assets/artstyle-c64/10f_item_talon.png)
+![Item Treibstoff](../assets/artstyle-c64/10g_item_treibstoff.png)
+![Item Chemikalien](../assets/artstyle-c64/10h_item_chemie.png)

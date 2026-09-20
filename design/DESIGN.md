@@ -53,3 +53,26 @@ diskutiert und versioniert werden kann.
 
 Weitere Tickets werden bei Bedarf ergänzt (z. B. Balancing-Iterationen,
 Soundkonzept, finale Production-Art auf Basis von TICKET-009 bis -017).
+
+## Grafik-Assets
+
+Verbindlicher Asset-Satz: [`assets/artstyle-c64/`](assets/artstyle-c64/README.md)
+– C64-Retro-Stil nach der Stilrevision in TICKET-009 (Abschnitt 20):
+16-Farben-VIC-II-Palette, durchgängiges Bayer-Dithering, schwarze
+Hintergründe.
+
+Alle Assets sind reproduzierbar und werden nicht von Hand nachbearbeitet:
+
+```bash
+pip install pillow
+python tools/gen_assets_c64.py
+```
+
+- `assets/artstyle-c64/native/` – native Pixelgröße (Spiel und Prototyp)
+- `assets/artstyle-c64/` – hochskalierte Vorschau (Tickets, Review)
+- `assets/artstyle/` – früherer Entwurfssatz, nur noch Historie
+
+## Prototyp
+
+[`prototype/`](../prototype/README.md) enthält einen minimalen
+pygame-Prototyp, der eine Figur mit WASD über die Hauptkarte bewegt.

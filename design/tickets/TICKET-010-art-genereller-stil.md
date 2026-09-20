@@ -7,6 +7,14 @@
 **Abhängigkeiten:** TICKET-009 (Hauptticket Art-Style)
 **Geschwistertickets:** TICKET-011 bis TICKET-017
 
+> **Stilrevision (2026-09-20):** Verbindliche Stilreferenz ist ab sofort der
+> C64-Look von *SKALD – Against the Black Priory*: 16-Farben-VIC-II-Palette,
+> durchgängiges Bayer-Dithering, tiefschwarze Hintergründe. Die Struktur-,
+> Raster- und Systemfestlegungen dieses Tickets gelten unverändert weiter;
+> geändert haben sich Palette und Schattierungstechnik (Begründung und
+> Regeln: TICKET-009, Abschnitt 20). Aktueller Asset-Satz:
+> `design/assets/artstyle-c64/`, Generator: `tools/gen_assets_c64.py`.
+
 ## Ziel des Tickets
 
 Konkretisierung der in TICKET-009 festgelegten Grundprinzipien zu einem
@@ -322,6 +330,10 @@ hinaus wächst.
 - [x] Referenzvergleich zu Burntime vertieft.
 - [x] Umfang mindestens 2000 Wörter.
 
-## Beispielgrafik
+## Beispielgrafiken (C64-Stilrevision)
 
-![Palette](../assets/artstyle/01_palette.png)
+Vorschau (hochskaliert); native Pixeldateien liegen unter
+`design/assets/artstyle-c64/native/`.
+
+![Palette und Dither-Rampen](../assets/artstyle-c64/01_palette.png)
+![Stilblatt](../assets/artstyle-c64/11_stilblatt.png)

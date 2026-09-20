@@ -8,6 +8,14 @@
 Stilregeln), TICKET-001 (Fraktionen/Mutationen), TICKET-013 (Porträts)
 **Geschwistertickets:** TICKET-012, TICKET-013, TICKET-015 bis TICKET-017
 
+> **Stilrevision (2026-09-20):** Verbindliche Stilreferenz ist ab sofort der
+> C64-Look von *SKALD – Against the Black Priory*: 16-Farben-VIC-II-Palette,
+> durchgängiges Bayer-Dithering, tiefschwarze Hintergründe. Die Struktur-,
+> Raster- und Systemfestlegungen dieses Tickets gelten unverändert weiter;
+> geändert haben sich Palette und Schattierungstechnik (Begründung und
+> Regeln: TICKET-009, Abschnitt 20). Aktueller Asset-Satz:
+> `design/assets/artstyle-c64/`, Generator: `tools/gen_assets_c64.py`.
+
 ## Ziel des Tickets
 
 Visuelle Ausarbeitung der Charaktersprites für die drei Hauptfraktionen
@@ -331,8 +339,11 @@ Konsistenzprüfung frühzeitig durchführen lässt.
 - [x] Ausrüstungs-/Statusvarianten beschrieben.
 - [x] Umfang mindestens 2000 Wörter.
 
-## Beispielgrafiken
+## Beispielgrafiken (C64-Stilrevision)
 
-![Sprite Bunker](../assets/artstyle/04a_sprite_bunker.png)
-![Sprite Mutierte](../assets/artstyle/04b_sprite_mutant.png)
-![Sprite Wastelander](../assets/artstyle/04c_sprite_wastelander.png)
+Vorschau (hochskaliert); native Pixeldateien liegen unter
+`design/assets/artstyle-c64/native/`.
+
+![Sprite Bunker](../assets/artstyle-c64/07a_sprite_bunker.png)
+![Sprite Mutierte](../assets/artstyle-c64/07b_sprite_mutant.png)
+![Sprite Wastelander](../assets/artstyle-c64/07c_sprite_wastelander.png)

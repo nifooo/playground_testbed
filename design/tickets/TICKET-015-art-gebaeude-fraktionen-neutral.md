@@ -9,6 +9,14 @@ Stilregeln), TICKET-002 (Karte/Siedlungen), TICKET-003
 (Produktionsgebäude)
 **Geschwistertickets:** TICKET-012 bis TICKET-014, TICKET-016, TICKET-017
 
+> **Stilrevision (2026-09-20):** Verbindliche Stilreferenz ist ab sofort der
+> C64-Look von *SKALD – Against the Black Priory*: 16-Farben-VIC-II-Palette,
+> durchgängiges Bayer-Dithering, tiefschwarze Hintergründe. Die Struktur-,
+> Raster- und Systemfestlegungen dieses Tickets gelten unverändert weiter;
+> geändert haben sich Palette und Schattierungstechnik (Begründung und
+> Regeln: TICKET-009, Abschnitt 20). Aktueller Asset-Satz:
+> `design/assets/artstyle-c64/`, Generator: `tools/gen_assets_c64.py`.
+
 ## Ziel des Tickets
 
 Visuelle Ausarbeitung der Gebäudesprites für alle drei Fraktionen sowie
@@ -337,9 +345,12 @@ müssen, da diese Systeme bewusst fraktionsunabhängig definiert wurden.
 - [x] Neutrale Sonderbauten in Aarbrück ausgearbeitet.
 - [x] Umfang mindestens 2000 Wörter.
 
-## Beispielgrafiken
+## Beispielgrafiken (C64-Stilrevision)
 
-![Gebäude Bunker](../assets/artstyle/05a_gebaeude_bunker.png)
-![Gebäude Mutierte](../assets/artstyle/05b_gebaeude_mutant.png)
-![Gebäude Wastelander](../assets/artstyle/05c_gebaeude_wastelander.png)
-![Gebäude Neutral Aarbrück](../assets/artstyle/05d_gebaeude_neutral_aarbrueck.png)
+Vorschau (hochskaliert); native Pixeldateien liegen unter
+`design/assets/artstyle-c64/native/`.
+
+![Gebäude Bunker](../assets/artstyle-c64/08a_gebaeude_bunker.png)
+![Gebäude Mutierte](../assets/artstyle-c64/08b_gebaeude_mutant.png)
+![Gebäude Wastelander](../assets/artstyle-c64/08c_gebaeude_wastelander.png)
+![Gebäude neutral (Aarbrück)](../assets/artstyle-c64/08d_gebaeude_neutral.png)

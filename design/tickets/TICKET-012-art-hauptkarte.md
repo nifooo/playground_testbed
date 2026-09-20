@@ -9,6 +9,14 @@ Stilregeln), TICKET-002 (Kartendesign & Regionen), TICKET-008 (Kartenansicht
 in der UI)
 **Geschwistertickets:** TICKET-010, TICKET-011, TICKET-013 bis TICKET-017
 
+> **Stilrevision (2026-09-20):** Verbindliche Stilreferenz ist ab sofort der
+> C64-Look von *SKALD – Against the Black Priory*: 16-Farben-VIC-II-Palette,
+> durchgängiges Bayer-Dithering, tiefschwarze Hintergründe. Die Struktur-,
+> Raster- und Systemfestlegungen dieses Tickets gelten unverändert weiter;
+> geändert haben sich Palette und Schattierungstechnik (Begründung und
+> Regeln: TICKET-009, Abschnitt 20). Aktueller Asset-Satz:
+> `design/assets/artstyle-c64/`, Generator: `tools/gen_assets_c64.py`.
+
 ## Ziel des Tickets
 
 Visuelle Ausarbeitung der Hauptkarte im Burntime-inspirierten Pixel-Art-
@@ -320,6 +328,10 @@ divergiert.
 - [x] Fraktionsspezifische Kartendarstellung konkretisiert.
 - [x] Umfang mindestens 2000 Wörter.
 
-## Beispielgrafik
+## Beispielgrafiken (C64-Stilrevision)
 
-![Hauptkarte Mockup](../assets/artstyle/02_hauptkarte.png)
+Vorschau (hochskaliert); native Pixeldateien liegen unter
+`design/assets/artstyle-c64/native/`.
+
+![Hauptkarte](../assets/artstyle-c64/02_hauptkarte.png)
+![Szenenbild Bastion Nord](../assets/artstyle-c64/05_szene_bastion.png)

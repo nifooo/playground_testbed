@@ -9,6 +9,14 @@ Stilregeln), TICKET-005 (Konflikt/Randgruppen), TICKET-014
 (Charaktersprite-Grundlagen)
 **Geschwistertickets:** TICKET-012 bis TICKET-015, TICKET-017
 
+> **Stilrevision (2026-09-20):** Verbindliche Stilreferenz ist ab sofort der
+> C64-Look von *SKALD – Against the Black Priory*: 16-Farben-VIC-II-Palette,
+> durchgängiges Bayer-Dithering, tiefschwarze Hintergründe. Die Struktur-,
+> Raster- und Systemfestlegungen dieses Tickets gelten unverändert weiter;
+> geändert haben sich Palette und Schattierungstechnik (Begründung und
+> Regeln: TICKET-009, Abschnitt 20). Aktueller Asset-Satz:
+> `design/assets/artstyle-c64/`, Generator: `tools/gen_assets_c64.py`.
+
 ## Ziel des Tickets
 
 Visuelle Ausarbeitung der Gegnerfiguren, die außerhalb der drei
@@ -328,7 +336,10 @@ statt über fraktionsähnliche Akzentfarben.
 - [x] Herkunftsandeutung ohne feste Fraktionszuordnung ausgearbeitet.
 - [x] Umfang mindestens 2000 Wörter.
 
-## Beispielgrafiken
+## Beispielgrafiken (C64-Stilrevision)
 
-![Gegner Räuber](../assets/artstyle/06a_gegner_raider.png)
-![Gegner Wildhund](../assets/artstyle/06b_gegner_wildhund.png)
+Vorschau (hochskaliert); native Pixeldateien liegen unter
+`design/assets/artstyle-c64/native/`.
+
+![Gegner Räuber](../assets/artstyle-c64/09a_gegner_raider.png)
+![Gegner Wildhund](../assets/artstyle-c64/09b_gegner_wildhund.png)

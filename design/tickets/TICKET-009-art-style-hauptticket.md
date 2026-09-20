@@ -8,6 +8,14 @@
 TICKET-008 (UI/UX-Grundkonzept)
 **Leitet ab in:** TICKET-010 bis TICKET-017 (siehe Abschnitt 8)
 
+> **Stilrevision (2026-09-20):** Verbindliche Stilreferenz ist ab sofort der
+> C64-Look von *SKALD – Against the Black Priory*: 16-Farben-VIC-II-Palette,
+> durchgängiges Bayer-Dithering, tiefschwarze Hintergründe. Die Struktur-,
+> Raster- und Systemfestlegungen dieses Tickets gelten unverändert weiter;
+> geändert haben sich Palette und Schattierungstechnik (Begründung und
+> Regeln: TICKET-009, Abschnitt 20). Aktueller Asset-Satz:
+> `design/assets/artstyle-c64/`, Generator: `tools/gen_assets_c64.py`.
+
 ## Ziel des Tickets
 
 Festlegung des grundlegenden visuellen Stils für den gesamten Simulator:
@@ -293,18 +301,77 @@ Beschränkung ist eine der zentralen Designentscheidungen dieses Haupttickets
 und soll in keinem der acht Sub-Tickets aus stilistischer Bequemlichkeit
 aufgeweicht werden.
 
+## 20. Stilrevision (2026-09-20): C64-Referenz statt flacher Amiga-Look
+
+Nach Sichtung konkreter Referenzbilder wird die Stilrichtung dieses
+Haupttickets präzisiert. Verbindliche Referenz ist ab sofort der
+C64-Look von **SKALD – Against the Black Priory**. Die Grundhaltung aus
+Abschnitt 1 bis 15 (niedrige Auflösung, Silhouette vor Detail, limitierte
+Animation, keine modernen Effekte) bleibt unverändert gültig; präzisiert
+werden Palette und Schattierungstechnik.
+
+### 20.1 Was sich ändert
+
+| Festlegung | Vorher (Abschnitt 3/7) | Jetzt verbindlich |
+|---|---|---|
+| Palette | ~32 erdige Farben, frei definiert | **16 Farben, VIC-II/C64 (Pepto)** – keine Zwischentöne, keine Palettenerweiterung |
+| Schattierung | Dithering optional neben Volltonflächen | **Durchgängiges 8×8-Bayer-Dithering** als einziges Mittel für Zwischentöne |
+| Hintergründe | gedeckte Flächen | **Tiefes Schwarz** als Bildgrund, Formen mit hartem Kontrast davor |
+| Kontrast | entsättigt, flach | **hoch** – gesättigte Akzente (Gelb, Orange, Cyan, Lichtgrün) gegen Schwarz |
+| Schrift | Bitmap-Font, 8×8/8×10 | **eigener 3×5-Bitmapfont**, ohne Umlaute (AE/OE/UE) |
+
+### 20.2 Was unverändert bleibt
+
+Rastergrößen (TICKET-010, Abschnitt 2), Silhouetten-Primat (Abschnitt 4),
+Animationsbudget von 2-4 Frames (Abschnitt 5), die Trennung zwischen
+Übersichts- und Detaildarstellung (Abschnitt 6), der Verzicht auf
+dynamische Beleuchtung (Abschnitt 7) sowie die Governance-Regel zur
+Palette (Abschnitt 14) – letztere gilt nun für die 16-Farben-Palette.
+
+### 20.3 Reproduzierbarkeit statt Einzelbilder
+
+Der gesamte Asset-Satz wird nicht mehr als Sammlung einzeln bearbeiteter
+PNGs gepflegt, sondern durch einen deterministischen Generator erzeugt:
+`tools/gen_assets_c64.py`. Er enthält Palette, Dither-Matrix, Pixelfont
+und alle Zeichenroutinen; jede Stiländerung erfolgt dort und wirkt sofort
+auf sämtliche Assets. Ausgabe:
+
+- `design/assets/artstyle-c64/native/` – native Pixelgröße, vom Spiel und
+  vom Prototyp (`prototype/main.py`) direkt verwendet
+- `design/assets/artstyle-c64/` – ganzzahlig hochskalierte Vorschau für
+  Tickets und Review
+
+Der frühere Satz unter `design/assets/artstyle/` bleibt als
+Entwurfshistorie erhalten, ist aber **nicht mehr maßgeblich**.
+
+### 20.4 Abgrenzung
+
+Wie schon in Abschnitt 11 festgehalten, dient auch die neue Referenz
+ausschließlich als Stilvorbild für Palette, Dithering, Rahmenaufbau und
+Bildaufteilung. Es werden keinerlei Assets, Schriftzüge oder Motive aus
+dem Referenzspiel übernommen; alle Grafiken sind eigenständige
+Neuschöpfungen für das in TICKET-001 bis TICKET-007 entwickelte Setting.
+
 ## Akzeptanzkriterien
 
-- [x] Burntime als Stilreferenz begründet verankert.
+- [x] Stilreferenz begründet verankert (revidiert in Abschnitt 20:
+      C64-Look statt flacher Amiga-Look).
 - [x] Zielauflösung und Skalierungsregeln definiert.
 - [x] Gemeinsame Basispalette mit Beispielgrafik (`01_palette.png`)
-      hinterlegt.
+      hinterlegt (16-Farben-C64-Palette, siehe Abschnitt 20).
 - [x] Grundregeln zu Silhouette, Dithering und Animation festgelegt.
 - [x] Acht Sub-Tickets abgeleitet und verlinkt.
+- [x] Stilrevision auf C64-Referenz dokumentiert (Abschnitt 20), Assets
+      über `tools/gen_assets_c64.py` reproduzierbar erzeugt.
 - [x] Umfang mindestens 2000 Wörter.
 
-## Beispielgrafiken (Stilreferenz)
+## Beispielgrafiken (C64-Stilrevision)
 
-![Palette](../assets/artstyle/01_palette.png)
-![Hauptkarte Mockup](../assets/artstyle/02_hauptkarte.png)
-![Dialogmenü Mockup](../assets/artstyle/08_menue_dialog.png)
+Vorschau (hochskaliert); native Pixeldateien liegen unter
+`design/assets/artstyle-c64/native/`.
+
+![Palette](../assets/artstyle-c64/01_palette.png)
+![Hauptkarte](../assets/artstyle-c64/02_hauptkarte.png)
+![Spielbildschirm](../assets/artstyle-c64/03_spielbildschirm.png)
+![Szenenbild Bastion Nord](../assets/artstyle-c64/05_szene_bastion.png)
+![Stilblatt](../assets/artstyle-c64/11_stilblatt.png)
