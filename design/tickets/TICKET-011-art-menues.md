@@ -41,7 +41,7 @@ und dieses Ticket ist entsprechend anzupassen.
 ## 1. Referenzmockup: Dialogfenster
 
 Das zentrale Referenzelement ist das Dialogfenster
-(`design/assets/artstyle/08_menue_dialog.png`), das die Burntime-typische
+(`design/assets/artstyle-c64/04_dialogszene.png`), das die Burntime-typische
 Anordnung übernimmt: links eine kreisförmig maskierte Porträtbüste (siehe
 TICKET-013) mit darunterliegendem Namensschild, rechts ein Textfeld für
 den Dialoginhalt, darunter eine Liste von Antwortoptionen als einzeln

@@ -38,8 +38,8 @@ Festlegungen in konkrete Pixel-Art-Regeln.
 ## 1. Referenzmockups: Räuber und Wildhund
 
 Zwei Beispiel-Gegner wurden bereits erstellt
-(`design/assets/artstyle/06a_gegner_raider.png`,
-`06b_gegner_wildhund.png`): ein menschlicher Räuber im 16×24-Charakterraster
+(`design/assets/artstyle-c64/09a_gegner_raider.png`,
+`09b_gegner_wildhund.png`): ein menschlicher Räuber im 16×24-Charakterraster
 (siehe TICKET-010, Abschnitt 2) mit improvisierter Waffe und
 Lumpenkopfbedeckung, sowie ein vierbeiniges Kreaturen-Sprite im breiteren
 20×14-Format für einen verwilderten Wachhund/Wolfshybriden.

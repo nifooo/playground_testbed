@@ -36,7 +36,7 @@ TICKET-009 zurückführen und widerspricht diesem an keiner Stelle.
 ## 1. Basispalette im Detail
 
 Die in TICKET-009 (Abschnitt 3) eingeführte 32-Farben-Palette
-(`design/assets/artstyle/01_palette.png`) gliedert sich in fünf
+(`design/assets/artstyle-c64/01_palette.png`) gliedert sich in fünf
 Funktionsgruppen:
 
 - **Neutralgruppe** (8 Farben): Schwarz, Beinahe-Schwarz, drei Grauabstufungen,
@@ -92,8 +92,8 @@ Abschnitt 2).
 
 Sprites und Icons erhalten grundsätzlich eine **1 Pixel breite, dunkle
 Kontur** (meist "near_black" oder "black" aus der Palette) an den äußeren
-Silhouettenkanten, wie in den Mockups (`04a_sprite_bunker.png`,
-`07a_item_werkzeug.png`) sichtbar. Innenliegende Kanten (z. B. zwischen
+Silhouettenkanten, wie in den Mockups (`07a_sprite_bunker.png`,
+`10a_item_werkzeug.png`) sichtbar. Innenliegende Kanten (z. B. zwischen
 Torso und Akzentstreifen) erhalten in der Regel keine zusätzliche Kontur,
 um die Leseflächen nicht zu überladen. Ausnahmen (z. B. Waffen, Werkzeuge
 mit dünnen Formen) sind in den jeweiligen Sub-Tickets gesondert vermerkt.
@@ -122,7 +122,7 @@ Obwohl auf dynamische Beleuchtung verzichtet wird (siehe TICKET-009,
 Abschnitt 7), erhält jedes Sprite eine konsistente, statische
 "Lichtrichtung von oben links": hellere Palettenfarben oben/links, dunklere
 unten/rechts innerhalb derselben Farbgruppe (z. B. bei Gebäuden sichtbar in
-`05a_gebaeude_bunker.png`: helles Steel oben, dunklerer Rand unten). Diese
+`08a_gebaeude_bunker.png`: helles Steel oben, dunklerer Rand unten). Diese
 Konvention gilt projektweit für alle Sub-Tickets, damit Licht und Schatten
 über unterschiedliche Assets hinweg konsistent wirken, obwohl keine echte
 Beleuchtungssimulation stattfindet.

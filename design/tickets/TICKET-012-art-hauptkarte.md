@@ -38,7 +38,7 @@ zugunsten von TICKET-002 aufzulösen.
 
 ## 1. Referenzmockup: Kartenausschnitt
 
-Der Kartenmockup (`design/assets/artstyle/02_hauptkarte.png`) zeigt bereits
+Der Kartenmockup (`design/assets/artstyle-c64/02_hauptkarte.png`) zeigt bereits
 zentrale Elemente im Zielstil: gedithertes Grasland als Basisterrain,
 symmetrische, gezackte Gebirgssilhouetten am Nordrand (siehe TICKET-002,
 Nordberge), ein mäandrierendes Flussband (die Aar), eine giftgrün

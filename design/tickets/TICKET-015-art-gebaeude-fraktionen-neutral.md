@@ -39,9 +39,9 @@ dass eine der beiden Vorgaben verändert oder neu interpretiert wird.
 ## 1. Referenzmockups: Vier Gebäudetypen
 
 Vier Beispielgebäude wurden bereits erstellt
-(`design/assets/artstyle/05a_gebaeude_bunker.png`,
-`05b_gebaeude_mutant.png`, `05c_gebaeude_wastelander.png`,
-`05d_gebaeude_neutral_aarbrueck.png`), die jeweils eine fraktionstypische
+(`design/assets/artstyle-c64/08a_gebaeude_bunker.png`,
+`08b_gebaeude_mutant.png`, `08c_gebaeude_wastelander.png`,
+`08d_gebaeude_neutral.png`), die jeweils eine fraktionstypische
 Grundform (siehe Abschnitt 2) mit charakteristischer Dachform und
 Akzentfarbe kombinieren.
 

@@ -35,20 +35,20 @@ neuen Ressourcentypen oder Wirtschaftsmechaniken ein, sondern übersetzt
 ausschließlich bestehende Festlegungen in ein konsistentes, 16×16-Pixel
 großes Icon-System.
 
-## 1. Referenzmockups: Sechs Item-Icons
+## 1. Referenzmockups: Acht Item-Icons
 
-Sechs Beispiel-Icons wurden bereits erstellt
-(`design/assets/artstyle/07a_item_werkzeug.png` bis `07f_item_talon.png`):
+Acht Beispiel-Icons wurden bereits erstellt
+(`design/assets/artstyle-c64/10a_item_werkzeug.png` bis `10h_item_chemie.png`):
 Werkzeug (diagonales Werkzeug-Symbol), Waffe (spitz zulaufende Klinge),
 Medizin (Flakon mit Flüssigkeitsfüllstand), Nahrung (Brotlaib-Andeutung),
-Erz (facettierter Steinblock) sowie der Aarbrücker Talon (rundes
-Münz-Icon). Diese sechs Icons decken exemplarisch die sechs
-Ressourcenkategorien aus TICKET-003 (Abschnitt 2) ab.
+Erz (facettierter Steinblock), der Aarbrücker Talon (rundes Münz-Icon),
+Treibstoff (Kanister) und Chemikalien (Fass). Diese acht Icons decken alle
+sechs Ressourcenkategorien aus TICKET-003 (Abschnitt 2) ab.
 
-## 1.1 Warum sechs statt weniger Referenzbeispiele
+## 1.1 Warum acht statt weniger Referenzbeispiele
 
 Anders als bei Gebäuden (TICKET-015: vier Referenzbeispiele) oder Sprites
-(TICKET-014: drei Referenzbeispiele) wurden hier bewusst sechs
+(TICKET-014: drei Referenzbeispiele) wurden hier bewusst acht
 Referenz-Icons erstellt, da Item-Icons erstens die zahlenmäßig größte
 Assetklasse des gesamten Projekts darstellen (jede einzelne in TICKET-003
 benannte Ressource benötigt letztlich ein eigenes Icon) und zweitens die

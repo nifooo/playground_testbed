@@ -26,8 +26,8 @@ und fraktionsspezifische Silhouettenmerkmale im festgelegten
 ## 1. Referenzmockups: Drei Fraktionssprites
 
 Drei Beispielsprites wurden bereits erstellt
-(`design/assets/artstyle/04a_sprite_bunker.png`, `04b_sprite_mutant.png`,
-`04c_sprite_wastelander.png`), jeweils in stehender Grundpose mit
+(`design/assets/artstyle-c64/07a_sprite_bunker.png`, `07b_sprite_mutant.png`,
+`07c_sprite_wastelander.png`), jeweils in stehender Grundpose mit
 fraktionstypischer Kleidungsfarbe und einem charakteristischen
 Kopfmerkmal (Helm bei Bunker, angedeutetes Drittes Auge bei Mutierten,
 Kapuze bei Wastelandern). Wie in TICKET-013 (Abschnitt 2.1) festgelegt,
@@ -229,7 +229,7 @@ kaum sauber darstellbar wären.
 Analog zum in TICKET-010 (Abschnitt 13) beschriebenen Produktionsbeispiel
 hier ein konkretes Beispiel für die Gehanimation (Abschnitt 6) eines
 Wastelander-Sprites: Ausgehend von der stehenden Grundpose (Mockup
-`04c_sprite_wastelander.png`) wird zunächst ein zweiter Frame erzeugt, bei
+`07c_sprite_wastelander.png`) wird zunächst ein zweiter Frame erzeugt, bei
 dem das linke Bein zwei Pixel nach vorne und das rechte Bein zwei Pixel
 nach hinten verschoben wird, während Kopf und Torso unverändert bleiben.
 Ein dritter Frame spiegelt diese Beinstellung. Durch schnelles Abspielen

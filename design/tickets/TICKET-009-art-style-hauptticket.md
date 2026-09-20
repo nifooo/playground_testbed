@@ -30,7 +30,7 @@ Grundregeln, damit über das gesamte Spiel hinweg ein konsistenter,
 "aus einem Guss" wirkender Retro-Look entsteht.
 
 Zur Veranschaulichung wurden bereits erste programmatisch erzeugte
-Pixel-Mockups angelegt (siehe `design/assets/artstyle/`). Sie sind
+Pixel-Mockups angelegt (siehe `design/assets/artstyle-c64/`). Sie sind
 bewusst als **Stilreferenzen** zu verstehen (Auflösung, Palette,
 Kompositionslogik), nicht als finale, von Hand gepixelte Production-Art –
 diese entsteht erst in der eigentlichen Asset-Produktion nach Freigabe
@@ -95,8 +95,9 @@ Retro-Touch essenziell ist.
 
 ## 3. Farbpalette
 
-Es wird eine gemeinsame, reduzierte Basispalette von rund **32 Farben**
-definiert (siehe `design/assets/artstyle/01_palette.png`), angelehnt an die
+Es wird eine gemeinsame, reduzierte Basispalette definiert – ursprünglich
+rund 32 erdige Farben, seit der Stilrevision verbindlich die
+**16-Farben-C64-Palette** (siehe Abschnitt 20) (siehe `design/assets/artstyle-c64/01_palette.png`), angelehnt an die
 Farbtiefe klassischer Amiga-OCS-Grafik (ursprünglich 32 von 4096 Farben).
 Die Palette ist bewusst erdig und entsättigt gehalten: Braun-, Grau- und
 Grüntöne dominieren, ergänzt um wenige kräftige Akzentfarben (Warnrot,
@@ -225,7 +226,7 @@ Referenz** für Auflösung, Farbbehandlung, Silhouettenlogik und
 UI-Aufbauprinzipien (siehe Abschnitt 2-6), nicht als Vorlage zum Kopieren
 konkreter Assets, Schriftzüge oder Icons. Alle in den Sub-Tickets
 beschriebenen und später produzierten Grafiken (einschließlich der bereits
-erzeugten Mockups in `design/assets/artstyle/`) sind eigenständige, an das
+erzeugten Mockups in `design/assets/artstyle-c64/`) sind eigenständige, an das
 in TICKET-001 bis TICKET-007 entwickelte Setting angepasste Neuschöpfungen.
 Diese Abgrenzung ist besonders relevant für Kartendarstellung
 (TICKET-012) und Dialogsystem (TICKET-011), die dem Referenzspiel
@@ -258,7 +259,7 @@ zwei Beispielsprites zu erstellen, bevor die volle Asset-Menge (alle
 Gebäudetypen, alle Itemtypen, alle Animationszyklen) produziert wird. Dies
 verhindert nachträgliche Stilbrüche, wie sie entstehen, wenn viele Assets
 parallel ohne gemeinsames Referenzblatt erarbeitet werden. Die in diesem
-Hauptticket hinterlegten Mockups (`design/assets/artstyle/`) erfüllen für
+Hauptticket hinterlegten Mockups (`design/assets/artstyle-c64/`) erfüllen für
 die aktuelle Design-Phase bereits diese Referenzfunktion in vereinfachter
 Form.
 
@@ -341,8 +342,8 @@ auf sämtliche Assets. Ausgabe:
 - `design/assets/artstyle-c64/` – ganzzahlig hochskalierte Vorschau für
   Tickets und Review
 
-Der frühere Satz unter `design/assets/artstyle/` bleibt als
-Entwurfshistorie erhalten, ist aber **nicht mehr maßgeblich**.
+Der frühere, flachere Entwurfssatz wurde mit der Revision entfernt; die
+Versionshistorie des Repositories bleibt die einzige Quelle dafür.
 
 ### 20.4 Abgrenzung
 

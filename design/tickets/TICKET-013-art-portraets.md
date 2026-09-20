@@ -39,8 +39,8 @@ selbst ausgearbeitet, nicht ihre Einbettung in die Menüoberfläche.
 ## 1. Referenzmockups: Drei Fraktionsporträts
 
 Drei Beispielporträts wurden bereits erstellt
-(`design/assets/artstyle/03a_portrait_bunker.png`,
-`03b_portrait_mutant.png`, `03c_portrait_wastelander.png`) im 32×32-Raster
+(`design/assets/artstyle-c64/06a_portrait_bunker.png`,
+`06b_portrait_mutant.png`, `06c_portrait_wastelander.png`) im 32×32-Raster
 (siehe TICKET-010, Abschnitt 2), jeweils mit Pergamentfarbenem Rahmen (siehe
 TICKET-011, Abschnitt 2) und fraktionsspezifischer Kleidungsfarbe im
 unteren Bilddrittel. Diese drei Bilder dienen als verbindliche

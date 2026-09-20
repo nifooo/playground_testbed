@@ -1,8 +1,9 @@
 # Grafik-Assets: C64-Retro-Stil
 
 Aktueller, verbindlicher Asset-Satz des Endzeit-Wirtschaftssimulators.
-Stilreferenz: **SKALD – Against the Black Priory** (C64-Optik), abgeloest
-wurde der fruehere, flachere Amiga-Look unter `../artstyle/`.
+Stilreferenz: **SKALD – Against the Black Priory** (C64-Optik). Der
+fruehere, flachere Amiga-Entwurfssatz wurde mit dieser Revision entfernt
+(siehe TICKET-009, Abschnitt 20).
 
 ## Stilregeln
 
