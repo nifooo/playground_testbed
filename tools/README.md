@@ -4,6 +4,24 @@
 |---|---|
 | `gen_assets_c64.py` | erzeugt den verbindlichen Asset-Satz (siehe `design/assets/artstyle-c64/README.md`) |
 | `photo2pixel.py` | wandelt eigene Fotos in Pixelgrafik im selben C64/SKALD-Stil um |
+| `photo2pixel_gui.py` | Fensteroberfläche für `photo2pixel.py` mit Live-Vorschau |
+
+## Pixelkonverter mit Oberfläche (Windows)
+
+1. [Python 3](https://www.python.org/downloads/) installieren, im Installer
+   **„Add python.exe to PATH"** ankreuzen.
+2. Im Projektordner **`Pixelkonverter.bat`** doppelklicken. Beim ersten Start
+   werden `pillow` und `numpy` automatisch installiert.
+
+Ein Bild lässt sich auch direkt auf die `.bat` ziehen. Unter Linux/macOS:
+`python tools/photo2pixel_gui.py [foto.jpg]`.
+
+Im Fenster: Bild öffnen (Strg+O) oder aus der Zwischenablage einfügen
+(Strg+V), links Asset-Typ und Regler einstellen – die Vorschau rechts rechnet
+live mit. „Speichern …" (Strg+S) schreibt dasselbe indizierte PNG wie das
+Kommandozeilen-Tool, auf Wunsch zusätzlich die vergrößerte Vorschau. Die
+Regler entsprechen den unten beschriebenen Optionen; Farben der Palette
+lassen sich per Klick einzeln abschalten.
 
 ## photo2pixel.py – Fotos in C64-Pixelgrafik
 
@@ -80,6 +98,7 @@ python tools/photo2pixel.py gesicht.jpg --typ portrait --varianten
 | `--glaetten` | Rauschen/Einzelpixel entfernen |
 | `--freistellen`, `--toleranz` | einfarbigen Hintergrund von den Ecken aus entfernen |
 | `--kontur` / `--no-kontur` | schwarze 1-Pixel-Kontur um freigestellte Motive |
+| `--zoom`, `--fokus-x`, `--fokus-y` | Ausschnitt verkleinern und verschieben |
 | `--einpassen` | ganzes Bild zeigen statt mittig zuschneiden |
 
 Alle Optionen: `python tools/photo2pixel.py --help`.

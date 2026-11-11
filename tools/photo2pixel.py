@@ -112,7 +112,8 @@ def tonwerte(img: Image.Image, a) -> Image.Image:
 
 
 def verkleinern(img: Image.Image, size, rand: int, mit_alpha: bool,
-                unten: bool, einpassen: bool, schaerfe: float, glaetten: bool):
+                unten: bool, einpassen: bool, schaerfe: float, glaetten: bool,
+                fokus=(0.5, 0.4), zoom: float = 1.0):
     """Auf native Groesse bringen. Liefert (rgb float 0..1, deckend bool)."""
     w, h = size
     if mit_alpha:
@@ -127,8 +128,13 @@ def verkleinern(img: Image.Image, size, rand: int, mit_alpha: bool,
         ox = rand + (iw - nw) // 2
         oy = rand + (ih - nh if unten else (ih - nh) // 2)
     else:
-        # Bild fuellt die Flaeche, Ueberstand wird mittig abgeschnitten
-        img = ImageOps.fit(img, size, Image.LANCZOS, centering=(0.5, 0.4))
+        # Bild fuellt die Flaeche; Ausschnitt im Zielformat, Lage ueber `fokus`
+        # (0..1 je Achse), Groesse ueber `zoom` (1 = groesstmoeglich)
+        f = min(img.width / w, img.height / h) / max(1.0, zoom)
+        cw, ch = max(1, round(w * f)), max(1, round(h * f))
+        x0 = round((img.width - cw) * min(1.0, max(0.0, fokus[0])))
+        y0 = round((img.height - ch) * min(1.0, max(0.0, fokus[1])))
+        img = img.crop((x0, y0, x0 + cw, y0 + ch))
         nw, nh, ox, oy = w, h, 0, 0
 
     # Alpha vormultiplizieren, damit kein Hintergrund in die Kanten blutet
@@ -253,7 +259,8 @@ def umwandeln(quelle: Image.Image, a) -> Image.Image:
     mit_alpha = a.alpha and hat_alpha
     img = tonwerte(img, a)
     rand = 1 if (a.kontur and mit_alpha) else 0
-    rgb, deckend = verkleinern(img, a.size, rand, mit_alpha, a.unten, a.einpassen, a.schaerfe, a.glaetten)
+    rgb, deckend = verkleinern(img, a.size, rand, mit_alpha, a.unten, a.einpassen, a.schaerfe, a.glaetten,
+                               (a.fokus_x, a.fokus_y), a.zoom)
     indices = quantisieren(rgb, a.farben, a.dither, a.bayer, a.ruhe)
     if a.kontur and mit_alpha:
         indices, deckend = kontur(indices, deckend)
@@ -310,6 +317,9 @@ def argumente(argv=None):
     g.add_argument("--freistellen", action="store_true", help="einfarbigen Hintergrund (von den Ecken aus) entfernen")
     g.add_argument("--toleranz", type=int, default=40, help="Farbtoleranz beim Freistellen (Standard: 40)")
     g.add_argument("--alpha", action=argparse.BooleanOptionalAction, default=None, help="Transparenz des Fotos uebernehmen")
+    g.add_argument("--zoom", type=float, default=1.0, help="Ausschnitt verkleinern = naeher heran (Standard: 1.0)")
+    g.add_argument("--fokus-x", type=float, default=0.5, help="Lage des Ausschnitts, 0 = links, 1 = rechts (Standard: 0.5)")
+    g.add_argument("--fokus-y", type=float, default=0.4, help="Lage des Ausschnitts, 0 = oben, 1 = unten (Standard: 0.4)")
     g.add_argument("--einpassen", action="store_true", help="ganzes Bild zeigen (schwarze Raender) statt zuschneiden")
 
     a = p.parse_args(argv)
