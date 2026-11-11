@@ -1,0 +1,857 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Endzeit RPG Editor</title>
+<style>
+  :root {
+    --bg: #000000;
+    --panel: #0d0d0d;
+    --panel2: #161616;
+    --line: #3a3a3a;
+    --text: #d8d8d8;
+    --dim: #8a8a8a;
+    --accent: #e8c050;
+    --accent2: #6ad06a;
+    --danger: #e05040;
+    --font: "Courier New", ui-monospace, monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text); font-family: var(--font); font-size: 14px; }
+  button, input, textarea, select { font-family: var(--font); font-size: 14px; color: var(--text); background: var(--panel2); border: 1px solid var(--line); }
+  button { cursor: pointer; padding: 4px 10px; }
+  button:hover { border-color: var(--accent); color: var(--accent); }
+  button.active { background: var(--accent); color: #000; border-color: var(--accent); }
+  button.danger:hover { border-color: var(--danger); color: var(--danger); }
+  input, textarea, select { padding: 4px 6px; }
+  input:focus, textarea:focus, select:focus { outline: 1px solid var(--accent); }
+  label { color: var(--dim); display: block; margin: 10px 0 3px; text-transform: uppercase; font-size: 12px; letter-spacing: 1px; }
+  h2 { font-size: 14px; color: var(--accent); margin: 0 0 8px; text-transform: uppercase; letter-spacing: 2px; }
+
+  header { display: flex; align-items: center; gap: 8px; padding: 6px 10px; border-bottom: 2px solid var(--line); flex-wrap: wrap; }
+  header .title { color: var(--accent); font-weight: bold; letter-spacing: 3px; margin-right: 12px; }
+  header .spacer { flex: 1; }
+  header .status { color: var(--dim); font-size: 12px; }
+  nav.tabs { display: flex; gap: 4px; }
+
+  main { height: calc(100% - 46px); }
+  .view { display: none; height: 100%; }
+  .view.shown { display: flex; }
+
+  .sidebar { width: 240px; min-width: 240px; border-right: 2px solid var(--line); padding: 10px; overflow-y: auto; background: var(--panel); }
+  .content { flex: 1; overflow: auto; padding: 10px; }
+  .rightbar { width: 260px; min-width: 260px; border-left: 2px solid var(--line); padding: 10px; overflow-y: auto; background: var(--panel); }
+
+  .list { list-style: none; margin: 0 0 8px; padding: 0; }
+  .list li { padding: 4px 6px; cursor: pointer; border: 1px solid transparent; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .list li:hover { border-color: var(--line); }
+  .list li.sel { background: var(--accent); color: #000; }
+  .list li .sub { color: var(--dim); font-size: 12px; }
+  .list li.sel .sub { color: #333; }
+  .row { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+  .hint { color: var(--dim); font-size: 12px; margin-top: 6px; line-height: 1.4; }
+  .err { color: var(--danger); font-size: 12px; min-height: 14px; }
+  .sep { border-top: 1px solid var(--line); margin: 12px 0; }
+
+  /* Karteneditor */
+  .palette { display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px; }
+  .tilebtn { display: flex; align-items: center; gap: 6px; padding: 3px; text-align: left; font-size: 12px; }
+  .tilebtn canvas { image-rendering: pixelated; width: 24px; height: 24px; flex: none; }
+  .colbtn { display: flex; align-items: center; gap: 6px; width: 100%; margin-bottom: 4px; text-align: left; }
+  .swatch { width: 16px; height: 16px; display: inline-block; border: 1px solid #000; flex: none; }
+  #mapWrap { display: inline-block; border: 2px solid var(--line); background: #000; line-height: 0; }
+  #mapCanvas { image-rendering: pixelated; cursor: crosshair; display: block; }
+  .maptoolbar { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin-bottom: 8px; }
+  .maptoolbar .group { display: flex; gap: 2px; align-items: center; padding-right: 8px; border-right: 1px solid var(--line); }
+  .maptoolbar .group:last-child { border-right: none; }
+  #cursorInfo { color: var(--dim); font-size: 12px; min-width: 200px; }
+
+  /* Formulare */
+  .form { max-width: 720px; }
+  .form input[type=text] { width: 100%; }
+  .form textarea { width: 100%; min-height: 220px; resize: vertical; line-height: 1.4; }
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+  .stats input { width: 100%; }
+  .statbar { height: 6px; background: var(--panel2); margin-top: 4px; }
+  .statbar div { height: 100%; background: var(--accent2); }
+  .empty { color: var(--dim); padding: 40px; text-align: center; }
+
+  pre.json { background: var(--panel); border: 1px solid var(--line); padding: 10px; font-size: 12px; overflow: auto; max-height: 70vh; white-space: pre; }
+
+  @media (max-width: 900px) {
+    .view.shown { flex-direction: column; }
+    .sidebar, .rightbar { width: auto; min-width: 0; border: none; border-bottom: 2px solid var(--line); }
+    .stats { grid-template-columns: repeat(2, 1fr); }
+    main { height: auto; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <span class="title">&#9762; ENDZEIT EDITOR</span>
+  <nav class="tabs">
+    <button data-tab="maps" class="active">Karten</button>
+    <button data-tab="quests">Quests</button>
+    <button data-tab="enemies">Gegner</button>
+    <button data-tab="project">Projekt / JSON</button>
+  </nav>
+  <span class="spacer"></span>
+  <span class="status" id="status"></span>
+  <button id="btnNew" class="danger" title="Neues, leeres Projekt">Neu</button>
+  <button id="btnOpen" title="Projektdatei (.json) laden">Öffnen…</button>
+  <button id="btnSave" title="Projekt als .json herunterladen (Strg+S)">Speichern</button>
+  <input type="file" id="fileInput" accept=".json,application/json" hidden>
+</header>
+
+<main>
+  <!-- ============ KARTEN ============ -->
+  <section class="view shown" id="view-maps">
+    <aside class="sidebar">
+      <h2>Karten</h2>
+      <ul class="list" id="mapList"></ul>
+      <div class="row">
+        <button id="mapAdd">+ Neue Karte</button>
+        <button id="mapDel" class="danger">Löschen</button>
+      </div>
+      <div class="sep"></div>
+      <div id="mapProps">
+        <label>ID</label><input type="text" id="mapId" style="width:100%">
+        <div class="err" id="mapIdErr"></div>
+        <label>Name</label><input type="text" id="mapName" style="width:100%">
+        <label>Größe (Breite × Höhe)</label>
+        <div class="row">
+          <input type="number" id="mapW" min="4" max="256" style="width:70px"> ×
+          <input type="number" id="mapH" min="4" max="256" style="width:70px">
+          <button id="mapResize">OK</button>
+        </div>
+        <div class="hint">Vergrößern füllt mit dem aktuell gewählten Gelände auf, Verkleinern schneidet rechts/unten ab.</div>
+      </div>
+    </aside>
+
+    <div class="content">
+      <div class="maptoolbar">
+        <div class="group">
+          <button data-tool="brush" class="active" title="Pinsel (B)">Pinsel</button>
+          <button data-tool="rect" title="Rechteck füllen (R)">Rechteck</button>
+          <button data-tool="fill" title="Fläche füllen (F)">Füllen</button>
+          <button data-tool="inspect" title="Feld auswählen/bearbeiten (I)">Auswahl</button>
+        </div>
+        <div class="group">
+          <button id="undoBtn" title="Rückgängig (Strg+Z)">&#8630;</button>
+          <button id="redoBtn" title="Wiederholen (Strg+Y)">&#8631;</button>
+        </div>
+        <div class="group">
+          Zoom <input type="range" id="zoom" min="1" max="4" value="2" style="width:80px">
+        </div>
+        <div class="group">
+          <label style="margin:0;display:flex;gap:4px;align-items:center;text-transform:none;font-size:13px;color:var(--text)">
+            <input type="checkbox" id="showCol" checked> Begehbarkeit zeigen
+          </label>
+          <label style="margin:0 0 0 8px;display:flex;gap:4px;align-items:center;text-transform:none;font-size:13px;color:var(--text)">
+            <input type="checkbox" id="showGrid"> Raster
+          </label>
+        </div>
+        <span id="cursorInfo"></span>
+      </div>
+      <div id="mapWrap"><canvas id="mapCanvas"></canvas></div>
+      <div class="hint">Linke Maustaste: malen · Rechte Maustaste: Gelände/Eigenschaft unter dem Cursor aufnehmen</div>
+    </div>
+
+    <aside class="rightbar">
+      <h2>Pinsel malt</h2>
+      <div class="row" style="margin-bottom:8px">
+        <button data-layer="terrain" class="active">Gelände</button>
+        <button data-layer="collision">Eigenschaft</button>
+      </div>
+      <div id="terrainPanel">
+        <div class="palette" id="palette"></div>
+        <div class="hint">Gelände setzt automatisch seine Standard-Eigenschaft (z.B. Wasser = nicht begehbar). Mit „Eigenschaft“ kannst du einzelne Felder überschreiben.</div>
+      </div>
+      <div id="collisionPanel" style="display:none">
+        <button class="colbtn active" data-col="."><span class="swatch" style="background:#3a9a3a"></span>Begehbar</button>
+        <button class="colbtn" data-col="#"><span class="swatch" style="background:#d03020"></span>Nicht begehbar</button>
+        <button class="colbtn" data-col="!"><span class="swatch" style="background:#e8c050"></span>Löst Aktion aus</button>
+        <div class="hint">Aktionsfelder bekommen eine Aktions-ID, die du später im Spiel mit einer konkreten Aktion verknüpfst. Mit dem Werkzeug „Auswahl“ ein Feld anklicken, um die ID zu vergeben.</div>
+      </div>
+      <div class="sep"></div>
+      <h2>Ausgewähltes Feld</h2>
+      <div id="inspect"><div class="hint">Werkzeug „Auswahl“ wählen und ein Feld anklicken.</div></div>
+      <div class="sep"></div>
+      <h2>Aktionsfelder</h2>
+      <ul class="list" id="actionList"></ul>
+    </aside>
+  </section>
+
+  <!-- ============ QUESTS ============ -->
+  <section class="view" id="view-quests">
+    <aside class="sidebar">
+      <h2>Quests</h2>
+      <ul class="list" id="questList"></ul>
+      <div class="row">
+        <button id="questAdd">+ Neue Quest</button>
+        <button id="questDel" class="danger">Löschen</button>
+      </div>
+    </aside>
+    <div class="content"><div class="form" id="questForm"></div></div>
+  </section>
+
+  <!-- ============ GEGNER ============ -->
+  <section class="view" id="view-enemies">
+    <aside class="sidebar">
+      <h2>Gegner</h2>
+      <ul class="list" id="enemyList"></ul>
+      <div class="row">
+        <button id="enemyAdd">+ Neuer Gegner</button>
+        <button id="enemyDel" class="danger">Löschen</button>
+      </div>
+    </aside>
+    <div class="content"><div class="form" id="enemyForm"></div></div>
+  </section>
+
+  <!-- ============ PROJEKT ============ -->
+  <section class="view" id="view-project">
+    <div class="content">
+      <div class="form">
+        <h2>Projekt</h2>
+        <label>Projektname</label>
+        <input type="text" id="projName">
+        <div class="hint">
+          Gespeichert wird alles in <b>einer JSON-Datei</b> (Karten, Quests, Gegner). Das Format ist in
+          <code>editor/FORMAT.md</code> beschrieben und lässt sich in jeder Sprache einlesen.
+          Zusätzlich speichert der Editor automatisch im Browser zwischen.
+        </div>
+        <div class="sep"></div>
+        <div class="row">
+          <button id="copyJson">JSON kopieren</button>
+          <span class="hint" id="copyInfo"></span>
+        </div>
+        <label>Vorschau der Projektdatei</label>
+        <pre class="json" id="jsonPreview"></pre>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script>
+"use strict";
+
+/* =====================================================================
+   Gelände (Tileset) im Stil von Ultima I/II: schwarzer Grund, 16 Farben,
+   8x8-Muster, die auf 16x16 Pixel verdoppelt werden.
+   ===================================================================== */
+const PAL = {
+  ".": null,       // transparent -> schwarz
+  k: "#000000", w: "#ffffff", g: "#2f8a2f", G: "#6ad06a", y: "#b89a40", Y: "#e8d890",
+  b: "#2a40c0", B: "#6a8aff", s: "#808080", S: "#c0c0c0", d: "#4a4a4a", r: "#a03020",
+  R: "#e05040", o: "#c07030", m: "#6a4220", t: "#9aff40", T: "#3a5a10"
+};
+
+const TERRAIN = [
+  { ch: ".", name: "Ödland",       col: ".", pat: ["........", "..y.....", "........", ".....y..", "........", ".y......", "......y.", "...y...."] },
+  { ch: ",", name: "Steppe",       col: ".", pat: ["........", ".g...g..", "g.g.g.g.", "........", "....g...", "..g.g.g.", "........", "g.....g."] },
+  { ch: "*", name: "Schutt",       col: ".", pat: ["........", ".dd.....", "dsdd..s.", ".....dd.", "..s.dsdd", ".dd.....", "dsd..d..", "......s."] },
+  { ch: "T", name: "Tote Bäume",   col: ".", pat: ["..m.m...", "...mm.m.", ".m.m.m..", "..mmm...", "...m....", "...m....", "...m....", "..mmm..."] },
+  { ch: "=", name: "Straße",       col: ".", pat: ["dddddddd", "dddddddd", "dddddddd", "Ydd.YYdd", "dddddddd", "dddddddd", "dddddddd", "dddddddd"] },
+  { ch: "_", name: "Boden innen",  col: ".", pat: ["mmmmmmmk", "mmmmmmmk", "kkkkkkkk", "mmmkmmmm", "mmmkmmmm", "kkkkkkkk", "mmmmmmmk", "mmmmmmmk"] },
+  { ch: "+", name: "Tür",          col: ".", pat: ["oooooooo", "om.mm.mo", "om.mm.mo", "om.mm.mo", "om.mmYmo", "om.mm.mo", "om.mm.mo", "oooooooo"] },
+  { ch: "%", name: "Giftsumpf",    col: ".", pat: ["TTTTTTTT", "TtTTTTTT", "TTTTTtTT", "TTTTTTTT", "TTtTTTTT", "TTTTTTtT", "TTTTTTTT", "TTTtTTTT"] },
+  { ch: "~", name: "Wasser",       col: "#", pat: ["........", ".BB.....", "B..B.BB.", "....B..B", "........", "..BB....", ".B..B.BB", "B....B.."] },
+  { ch: "^", name: "Berge",        col: "#", pat: ["........", "...S....", "..SsS...", ".SssdS..", ".sssdds.", "sssdddds", "........", "........"] },
+  { ch: "#", name: "Mauer",        col: "#", pat: ["rrrdrrrr", "rrrdrrrr", "dddddddd", "rdrrrrdr", "rdrrrrdr", "dddddddd", "rrrdrrrr", "rrrdrrrr"] },
+  { ch: "X", name: "Autowrack",    col: "#", pat: ["........", "..rrrr..", ".rSSSSr.", "rrrrrrrr", "rRrrrrRr", "rrrrrrrr", ".dd..dd.", "........"] },
+  { ch: "R", name: "Ruine",        col: "#", pat: ["s.......", "s..s....", "ss.s..s.", "sSss.ss.", "ssss.sss", "sdssssds", "ssssssss", "dddddddd"] },
+  { ch: " ", name: "Leere",        col: "#", pat: ["........", "........", "........", "........", "........", "........", "........", "........"] }
+];
+const TERRAIN_BY_CH = Object.fromEntries(TERRAIN.map(t => [t.ch, t]));
+const COLLISION = {
+  ".": { name: "Begehbar",        color: "rgba(58,154,58,0)" },
+  "#": { name: "Nicht begehbar",  color: "rgba(208,48,32,0.45)" },
+  "!": { name: "Löst Aktion aus", color: "rgba(232,192,80,0.55)" }
+};
+const TILE = 16;
+
+const tileCache = {};
+function tileCanvas(ch) {
+  if (tileCache[ch]) return tileCache[ch];
+  const t = TERRAIN_BY_CH[ch] || TERRAIN_BY_CH[" "];
+  const c = document.createElement("canvas");
+  c.width = c.height = TILE;
+  const g = c.getContext("2d");
+  g.fillStyle = "#000"; g.fillRect(0, 0, TILE, TILE);
+  for (let y = 0; y < 8; y++) for (let x = 0; x < 8; x++) {
+    const col = PAL[t.pat[y][x]];
+    if (col) { g.fillStyle = col; g.fillRect(x * 2, y * 2, 2, 2); }
+  }
+  return (tileCache[ch] = c);
+}
+
+/* =====================================================================
+   Datenmodell
+   ===================================================================== */
+const FORMAT = "endzeit-rpg";
+const VERSION = 1;
+const STORAGE_KEY = "endzeit-rpg-editor-project";
+
+function makeMap(id, name, w, h, fill = ".") {
+  const t = TERRAIN_BY_CH[fill];
+  return {
+    id, name, width: w, height: h,
+    terrain: Array.from({ length: h }, () => fill.repeat(w)),
+    collision: Array.from({ length: h }, () => t.col.repeat(w)),
+    actions: []
+  };
+}
+function newProject() {
+  return {
+    format: FORMAT, version: VERSION, name: "Mein Endzeit-RPG",
+    maps: [makeMap("map_001", "Ödland", 40, 30)],
+    quests: [], enemies: []
+  };
+}
+
+let project = newProject();
+// Für die Bearbeitung werden Kartenzeilen intern als Arrays von Zeichen gehalten.
+function toEditable(p) {
+  p.maps.forEach(m => {
+    m.terrain = m.terrain.map(r => Array.isArray(r) ? r : [...r]);
+    m.collision = m.collision.map(r => Array.isArray(r) ? r : [...r]);
+  });
+  return p;
+}
+function serialize() {
+  const out = {
+    format: FORMAT, version: VERSION, name: project.name,
+    tileset: {
+      terrain: Object.fromEntries(TERRAIN.map(t => [t.ch, { name: t.name, default_collision: t.col }])),
+      collision: Object.fromEntries(Object.entries(COLLISION).map(([k, v]) => [k, v.name]))
+    },
+    maps: project.maps.map(m => ({
+      id: m.id, name: m.name, width: m.width, height: m.height,
+      terrain: m.terrain.map(r => r.join("")),
+      collision: m.collision.map(r => r.join("")),
+      actions: m.actions
+        .slice().sort((a, b) => a.y - b.y || a.x - b.x)
+        .map(a => ({ x: a.x, y: a.y, id: a.id, note: a.note }))
+    })),
+    quests: project.quests.map(q => ({ id: q.id, title: q.title, description: q.description })),
+    enemies: project.enemies.map(e => ({
+      id: e.id, name: e.name, description: e.description,
+      strength: e.strength, constitution: e.constitution, dexterity: e.dexterity, intelligence: e.intelligence
+    }))
+  };
+  return JSON.stringify(out, null, 2);
+}
+function deserialize(text) {
+  const d = JSON.parse(text);
+  if (d.format !== FORMAT) throw new Error("Keine Endzeit-RPG-Projektdatei (Feld \"format\" fehlt oder ist falsch).");
+  const p = {
+    format: FORMAT, version: VERSION, name: d.name || "Unbenannt",
+    maps: (d.maps || []).map(m => {
+      const w = m.width | 0, h = m.height | 0;
+      const pad = (rows, fill) => Array.from({ length: h }, (_, y) => {
+        const r = (rows && rows[y]) || "";
+        return (r + fill.repeat(w)).slice(0, w);
+      });
+      return {
+        id: m.id, name: m.name || m.id, width: w, height: h,
+        terrain: pad(m.terrain, " "), collision: pad(m.collision, "#"),
+        actions: (m.actions || []).map(a => ({ x: a.x, y: a.y, id: a.id || "", note: a.note || "" }))
+      };
+    }),
+    quests: (d.quests || []).map(q => ({ id: q.id, title: q.title || "", description: q.description || "" })),
+    enemies: (d.enemies || []).map(e => ({
+      id: e.id, name: e.name || "", description: e.description || "",
+      strength: +e.strength || 0, constitution: +e.constitution || 0,
+      dexterity: +e.dexterity || 0, intelligence: +e.intelligence || 0
+    }))
+  };
+  return toEditable(p);
+}
+
+function nextId(prefix, list) {
+  let n = 1;
+  const ids = new Set(list.map(x => x.id));
+  while (ids.has(prefix + String(n).padStart(3, "0"))) n++;
+  return prefix + String(n).padStart(3, "0");
+}
+function validId(id, list, self) {
+  if (!/^[A-Za-z0-9_\-]+$/.test(id)) return "Nur Buchstaben, Ziffern, _ und - erlaubt.";
+  if (list.some(x => x !== self && x.id === id)) return "Diese ID gibt es schon.";
+  return "";
+}
+
+/* Autosave */
+let saveTimer = null, dirty = false;
+function changed() {
+  dirty = true;
+  setStatus("ungespeicherte Änderungen");
+  scheduleAutosave();
+}
+function autosaveNow() {
+  clearTimeout(saveTimer); saveTimer = null;
+  try { localStorage.setItem(STORAGE_KEY, serialize()); } catch (e) { /* Browser-Speicher nicht verfügbar */ }
+}
+function scheduleAutosave() {
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => {
+    autosaveNow();
+    if (dirty) setStatus("ungespeichert (im Browser zwischengespeichert)");
+    if (currentTab === "project") renderProject();
+  }, 400);
+}
+window.addEventListener("pagehide", () => { if (saveTimer) autosaveNow(); });
+function setStatus(s) { document.getElementById("status").textContent = s; }
+
+/* =====================================================================
+   Tabs
+   ===================================================================== */
+let currentTab = "maps";
+document.querySelectorAll("nav.tabs button").forEach(b => b.addEventListener("click", () => showTab(b.dataset.tab)));
+function showTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll("nav.tabs button").forEach(b => b.classList.toggle("active", b.dataset.tab === tab));
+  document.querySelectorAll(".view").forEach(v => v.classList.toggle("shown", v.id === "view-" + tab));
+  if (tab === "maps") renderMapsTab();
+  if (tab === "quests") renderQuests();
+  if (tab === "enemies") renderEnemies();
+  if (tab === "project") renderProject();
+}
+
+function esc(s) { return String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])); }
+
+/* =====================================================================
+   Karteneditor
+   ===================================================================== */
+const mapCanvas = document.getElementById("mapCanvas");
+const mctx = mapCanvas.getContext("2d");
+let mapIdx = 0;
+let tool = "brush", layer = "terrain", curTerrain = ".", curCol = ".";
+let zoom = 2, showCol = true, showGrid = false;
+let selected = null; // {x,y}
+let undoStack = [], redoStack = [];
+
+const curMap = () => project.maps[mapIdx];
+
+// Palette aufbauen
+const paletteEl = document.getElementById("palette");
+TERRAIN.forEach(t => {
+  const b = document.createElement("button");
+  b.className = "tilebtn" + (t.ch === curTerrain ? " active" : "");
+  b.dataset.ch = t.ch;
+  b.title = `${t.name} – Zeichen "${t.ch}", Standard: ${COLLISION[t.col].name}`;
+  const c = document.createElement("canvas"); c.width = c.height = TILE;
+  c.getContext("2d").drawImage(tileCanvas(t.ch), 0, 0);
+  b.appendChild(c);
+  b.appendChild(document.createTextNode(t.name));
+  b.addEventListener("click", () => { curTerrain = t.ch; setLayer("terrain"); updatePaletteSel(); });
+  paletteEl.appendChild(b);
+});
+function updatePaletteSel() {
+  paletteEl.querySelectorAll(".tilebtn").forEach(b => b.classList.toggle("active", b.dataset.ch === curTerrain));
+  document.querySelectorAll(".colbtn").forEach(b => b.classList.toggle("active", b.dataset.col === curCol));
+}
+document.querySelectorAll(".colbtn").forEach(b => b.addEventListener("click", () => { curCol = b.dataset.col; setLayer("collision"); updatePaletteSel(); }));
+document.querySelectorAll("[data-layer]").forEach(b => b.addEventListener("click", () => setLayer(b.dataset.layer)));
+function setLayer(l) {
+  layer = l;
+  document.querySelectorAll("[data-layer]").forEach(b => b.classList.toggle("active", b.dataset.layer === l));
+  document.getElementById("terrainPanel").style.display = l === "terrain" ? "" : "none";
+  document.getElementById("collisionPanel").style.display = l === "collision" ? "" : "none";
+  if (tool === "inspect") setTool("brush");
+}
+document.querySelectorAll("[data-tool]").forEach(b => b.addEventListener("click", () => setTool(b.dataset.tool)));
+function setTool(t) {
+  tool = t;
+  document.querySelectorAll("[data-tool]").forEach(b => b.classList.toggle("active", b.dataset.tool === t));
+  mapCanvas.style.cursor = t === "inspect" ? "pointer" : "crosshair";
+}
+document.getElementById("zoom").addEventListener("input", e => { zoom = +e.target.value; drawMap(); });
+document.getElementById("showCol").addEventListener("change", e => { showCol = e.target.checked; drawMap(); });
+document.getElementById("showGrid").addEventListener("change", e => { showGrid = e.target.checked; drawMap(); });
+
+function renderMapsTab() {
+  if (mapIdx >= project.maps.length) mapIdx = project.maps.length - 1;
+  const ul = document.getElementById("mapList");
+  ul.innerHTML = project.maps.map((m, i) =>
+    `<li data-i="${i}" class="${i === mapIdx ? "sel" : ""}">${esc(m.name || m.id)} <span class="sub">${m.width}×${m.height}</span></li>`).join("");
+  ul.querySelectorAll("li").forEach(li => li.addEventListener("click", () => {
+    mapIdx = +li.dataset.i; selected = null; undoStack = []; redoStack = []; renderMapsTab();
+  }));
+  const has = !!curMap();
+  document.getElementById("mapProps").style.display = has ? "" : "none";
+  document.getElementById("mapDel").disabled = !has;
+  if (!has) { mapCanvas.width = mapCanvas.height = 0; document.getElementById("actionList").innerHTML = ""; renderInspect(); return; }
+  const m = curMap();
+  document.getElementById("mapId").value = m.id;
+  document.getElementById("mapIdErr").textContent = "";
+  document.getElementById("mapName").value = m.name;
+  document.getElementById("mapW").value = m.width;
+  document.getElementById("mapH").value = m.height;
+  drawMap(); renderActions(); renderInspect();
+}
+
+document.getElementById("mapAdd").addEventListener("click", () => {
+  const id = nextId("map_", project.maps);
+  project.maps.push(toEditable({ maps: [makeMap(id, "Neue Karte", 40, 30, curTerrain)] }).maps[0]);
+  mapIdx = project.maps.length - 1; selected = null; undoStack = []; redoStack = [];
+  changed(); renderMapsTab();
+});
+document.getElementById("mapDel").addEventListener("click", () => {
+  const m = curMap(); if (!m) return;
+  if (!confirm(`Karte "${m.name}" wirklich löschen?`)) return;
+  project.maps.splice(mapIdx, 1); mapIdx = Math.max(0, mapIdx - 1); selected = null; undoStack = []; redoStack = [];
+  changed(); renderMapsTab();
+});
+document.getElementById("mapId").addEventListener("input", e => {
+  const m = curMap(), v = e.target.value.trim(), err = validId(v, project.maps, m);
+  document.getElementById("mapIdErr").textContent = err;
+  if (!err) { m.id = v; changed(); }
+});
+document.getElementById("mapName").addEventListener("input", e => {
+  curMap().name = e.target.value; changed();
+  const li = document.querySelector(`#mapList li[data-i="${mapIdx}"]`);
+  if (li) li.innerHTML = `${esc(curMap().name || curMap().id)} <span class="sub">${curMap().width}×${curMap().height}</span>`;
+});
+document.getElementById("mapResize").addEventListener("click", () => {
+  const m = curMap();
+  const w = Math.max(4, Math.min(256, +document.getElementById("mapW").value | 0));
+  const h = Math.max(4, Math.min(256, +document.getElementById("mapH").value | 0));
+  if (w === m.width && h === m.height) return;
+  pushUndo();
+  const tc = TERRAIN_BY_CH[curTerrain].col;
+  const resize = (rows, fill) => Array.from({ length: h }, (_, y) => Array.from({ length: w }, (_, x) => (rows[y] && x < m.width) ? rows[y][x] : fill));
+  m.terrain = resize(m.terrain, curTerrain);
+  m.collision = resize(m.collision, tc);
+  m.width = w; m.height = h;
+  m.actions = m.actions.filter(a => a.x < w && a.y < h);
+  selected = null; changed(); renderMapsTab();
+});
+
+function drawMap() {
+  const m = curMap(); if (!m) return;
+  const s = TILE * zoom;
+  mapCanvas.width = m.width * s; mapCanvas.height = m.height * s;
+  mctx.imageSmoothingEnabled = false;
+  for (let y = 0; y < m.height; y++) for (let x = 0; x < m.width; x++) drawCell(x, y);
+  if (showGrid) {
+    mctx.strokeStyle = "rgba(255,255,255,0.12)"; mctx.lineWidth = 1; mctx.beginPath();
+    for (let x = 0; x <= m.width; x++) { mctx.moveTo(x * s + 0.5, 0); mctx.lineTo(x * s + 0.5, m.height * s); }
+    for (let y = 0; y <= m.height; y++) { mctx.moveTo(0, y * s + 0.5); mctx.lineTo(m.width * s, y * s + 0.5); }
+    mctx.stroke();
+  }
+  if (selected) {
+    mctx.strokeStyle = "#ffffff"; mctx.lineWidth = 2;
+    mctx.strokeRect(selected.x * s + 1, selected.y * s + 1, s - 2, s - 2);
+  }
+}
+function drawCell(x, y) {
+  const m = curMap(), s = TILE * zoom;
+  mctx.drawImage(tileCanvas(m.terrain[y][x]), x * s, y * s, s, s);
+  if (!showCol) return;
+  const c = m.collision[y][x];
+  if (c === "#") {
+    mctx.fillStyle = COLLISION["#"].color;
+    for (let i = 0; i < s; i += 4 * zoom) mctx.fillRect(x * s, y * s + i, s, zoom);
+  } else if (c === "!") {
+    mctx.fillStyle = COLLISION["!"].color; mctx.fillRect(x * s, y * s, s, s);
+    mctx.fillStyle = "#000"; mctx.font = `bold ${12 * zoom}px Courier New`;
+    mctx.textAlign = "center"; mctx.textBaseline = "middle";
+    mctx.fillText("!", x * s + s / 2, y * s + s / 2 + zoom);
+  }
+}
+
+function setCell(x, y) {
+  const m = curMap();
+  if (layer === "terrain") {
+    m.terrain[y][x] = curTerrain;
+    setCollision(x, y, TERRAIN_BY_CH[curTerrain].col);
+  } else {
+    setCollision(x, y, curCol);
+  }
+}
+function setCollision(x, y, c) {
+  const m = curMap();
+  const prev = m.collision[y][x];
+  m.collision[y][x] = c;
+  if (c === "!" && prev !== "!") m.actions.push({ x, y, id: "", note: "" });
+  if (c !== "!" && prev === "!") m.actions = m.actions.filter(a => a.x !== x || a.y !== y);
+}
+
+function snapshot() {
+  const m = curMap();
+  return JSON.stringify({ w: m.width, h: m.height, t: m.terrain, c: m.collision, a: m.actions });
+}
+function restore(snap) {
+  const m = curMap(), d = JSON.parse(snap);
+  m.width = d.w; m.height = d.h; m.terrain = d.t; m.collision = d.c; m.actions = d.a;
+}
+function pushUndo() { undoStack.push(snapshot()); if (undoStack.length > 100) undoStack.shift(); redoStack = []; }
+function undo() { if (!undoStack.length) return; redoStack.push(snapshot()); restore(undoStack.pop()); selected = null; changed(); renderMapsTab(); }
+function redo() { if (!redoStack.length) return; undoStack.push(snapshot()); restore(redoStack.pop()); selected = null; changed(); renderMapsTab(); }
+document.getElementById("undoBtn").addEventListener("click", undo);
+document.getElementById("redoBtn").addEventListener("click", redo);
+
+function cellAt(ev) {
+  const r = mapCanvas.getBoundingClientRect(), s = TILE * zoom, m = curMap();
+  const x = Math.floor((ev.clientX - r.left) * (mapCanvas.width / r.width) / s);
+  const y = Math.floor((ev.clientY - r.top) * (mapCanvas.height / r.height) / s);
+  return (x >= 0 && y >= 0 && x < m.width && y < m.height) ? { x, y } : null;
+}
+let painting = false, rectStart = null, lastCell = null;
+mapCanvas.addEventListener("contextmenu", e => e.preventDefault());
+mapCanvas.addEventListener("mousedown", e => {
+  const c = cellAt(e); if (!c) return;
+  const m = curMap();
+  if (e.button === 2) { // Pipette
+    if (layer === "terrain") curTerrain = m.terrain[c.y][c.x]; else curCol = m.collision[c.y][c.x];
+    updatePaletteSel(); return;
+  }
+  if (e.button !== 0) return;
+  if (tool === "inspect") { selected = c; drawMap(); renderInspect(); return; }
+  if (tool === "fill") { pushUndo(); floodFill(c.x, c.y); changed(); drawMap(); renderActions(); renderInspect(); return; }
+  pushUndo();
+  if (tool === "brush") { painting = true; lastCell = c; setCell(c.x, c.y); drawCell(c.x, c.y); }
+  if (tool === "rect") { rectStart = c; }
+});
+mapCanvas.addEventListener("mousemove", e => {
+  const c = cellAt(e);
+  const info = document.getElementById("cursorInfo");
+  if (c) {
+    const m = curMap(), t = TERRAIN_BY_CH[m.terrain[c.y][c.x]];
+    info.textContent = `x ${c.x}, y ${c.y} · ${t ? t.name : "?"} · ${COLLISION[m.collision[c.y][c.x]].name}`;
+  } else info.textContent = "";
+  if (painting && c && (c.x !== lastCell.x || c.y !== lastCell.y)) {
+    line(lastCell, c, (x, y) => { setCell(x, y); drawCell(x, y); });
+    lastCell = c;
+  }
+  if (rectStart && c) { drawMap(); previewRect(rectStart, c); }
+});
+window.addEventListener("mouseup", e => {
+  if (painting) { painting = false; changed(); drawMap(); renderActions(); renderInspect(); }
+  if (rectStart) {
+    const c = cellAt(e) || rectStart;
+    const x0 = Math.min(rectStart.x, c.x), x1 = Math.max(rectStart.x, c.x);
+    const y0 = Math.min(rectStart.y, c.y), y1 = Math.max(rectStart.y, c.y);
+    for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) setCell(x, y);
+    rectStart = null; changed(); drawMap(); renderActions(); renderInspect();
+  }
+});
+function previewRect(a, b) {
+  const s = TILE * zoom;
+  mctx.strokeStyle = "#e8c050"; mctx.lineWidth = 2; mctx.setLineDash([4, 3]);
+  mctx.strokeRect(Math.min(a.x, b.x) * s + 1, Math.min(a.y, b.y) * s + 1, (Math.abs(a.x - b.x) + 1) * s - 2, (Math.abs(a.y - b.y) + 1) * s - 2);
+  mctx.setLineDash([]);
+}
+function line(a, b, fn) { // Bresenham, damit schnelle Mausbewegungen keine Lücken lassen
+  let x0 = a.x, y0 = a.y; const dx = Math.abs(b.x - x0), dy = -Math.abs(b.y - y0);
+  const sx = x0 < b.x ? 1 : -1, sy = y0 < b.y ? 1 : -1; let err = dx + dy;
+  for (;;) { fn(x0, y0); if (x0 === b.x && y0 === b.y) break; const e2 = 2 * err; if (e2 >= dy) { err += dy; x0 += sx; } if (e2 <= dx) { err += dx; y0 += sy; } }
+}
+function floodFill(sx, sy) {
+  const m = curMap();
+  const grid = layer === "terrain" ? m.terrain : m.collision;
+  const target = grid[sy][sx], repl = layer === "terrain" ? curTerrain : curCol;
+  if (target === repl) return;
+  const stack = [[sx, sy]], seen = new Set();
+  while (stack.length) {
+    const [x, y] = stack.pop(); const k = y * m.width + x;
+    if (x < 0 || y < 0 || x >= m.width || y >= m.height || seen.has(k) || grid[y][x] !== target) continue;
+    seen.add(k); setCell(x, y);
+    stack.push([x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]);
+  }
+}
+
+function renderInspect() {
+  const el = document.getElementById("inspect"), m = curMap();
+  if (!m || !selected) { el.innerHTML = `<div class="hint">Werkzeug „Auswahl“ wählen und ein Feld anklicken.</div>`; return; }
+  const { x, y } = selected;
+  const t = TERRAIN_BY_CH[m.terrain[y][x]], c = m.collision[y][x];
+  let html = `<div>Position: <b>${x}, ${y}</b></div><div>Gelände: ${esc(t ? t.name : "?")}</div>
+    <label>Eigenschaft</label>
+    <select id="inspCol" style="width:100%">${Object.entries(COLLISION).map(([k, v]) => `<option value="${k}" ${k === c ? "selected" : ""}>${v.name}</option>`).join("")}</select>`;
+  const a = m.actions.find(a => a.x === x && a.y === y);
+  if (a) {
+    html += `<label>Aktions-ID</label><input type="text" id="inspActId" style="width:100%" placeholder="z.B. tuer_bunker_01" value="${esc(a.id)}">
+      <label>Notiz</label><textarea id="inspActNote" style="width:100%;min-height:70px" placeholder="Was soll hier passieren?">${esc(a.note)}</textarea>
+      <div class="hint">Die Aktion selbst wird später im Spiel über diese ID verknüpft.</div>`;
+  }
+  el.innerHTML = html;
+  el.querySelector("#inspCol").addEventListener("change", e => {
+    pushUndo(); setCollision(x, y, e.target.value); changed(); drawMap(); renderActions(); renderInspect();
+  });
+  if (a) {
+    el.querySelector("#inspActId").addEventListener("input", e => { a.id = e.target.value.trim(); changed(); renderActions(); });
+    el.querySelector("#inspActNote").addEventListener("input", e => { a.note = e.target.value; changed(); });
+  }
+}
+function renderActions() {
+  const m = curMap(), ul = document.getElementById("actionList");
+  if (!m || !m.actions.length) { ul.innerHTML = `<li class="sub" style="cursor:default">keine</li>`; return; }
+  const sorted = m.actions.slice().sort((a, b) => a.y - b.y || a.x - b.x);
+  ul.innerHTML = sorted.map(a => `<li data-x="${a.x}" data-y="${a.y}" class="${selected && selected.x === a.x && selected.y === a.y ? "sel" : ""}">
+      ${a.x},${a.y} <span class="sub">${a.id ? esc(a.id) : "(ohne ID)"}</span></li>`).join("");
+  ul.querySelectorAll("li[data-x]").forEach(li => li.addEventListener("click", () => {
+    selected = { x: +li.dataset.x, y: +li.dataset.y }; setTool("inspect"); drawMap(); renderInspect(); renderActions();
+  }));
+}
+
+/* =====================================================================
+   Quests
+   ===================================================================== */
+let questIdx = 0;
+function renderQuests() {
+  const ul = document.getElementById("questList");
+  if (questIdx >= project.quests.length) questIdx = project.quests.length - 1;
+  ul.innerHTML = project.quests.map((q, i) => `<li data-i="${i}" class="${i === questIdx ? "sel" : ""}">${esc(q.title || "(ohne Titel)")}<br><span class="sub">${esc(q.id)}</span></li>`).join("")
+    || `<li class="sub" style="cursor:default">noch keine Quests</li>`;
+  ul.querySelectorAll("li[data-i]").forEach(li => li.addEventListener("click", () => { questIdx = +li.dataset.i; renderQuests(); }));
+  document.getElementById("questDel").disabled = !project.quests.length;
+  const f = document.getElementById("questForm"), q = project.quests[questIdx];
+  if (!q) { f.innerHTML = `<div class="empty">Lege links eine neue Quest an.</div>`; return; }
+  f.innerHTML = `
+    <h2>Quest bearbeiten</h2>
+    <label>ID</label><input type="text" id="qId" value="${esc(q.id)}"><div class="err" id="qIdErr"></div>
+    <label>Titel</label><input type="text" id="qTitle" value="${esc(q.title)}" placeholder="z.B. Wasser für Neu-Eden">
+    <label>Quest-Beschreibung</label><textarea id="qDesc" placeholder="Worum geht es in dieser Quest?">${esc(q.description)}</textarea>`;
+  f.querySelector("#qId").addEventListener("input", e => {
+    const v = e.target.value.trim(), err = validId(v, project.quests, q);
+    f.querySelector("#qIdErr").textContent = err;
+    if (!err) { q.id = v; changed(); refreshListItem(ul, questIdx, q.title || "(ohne Titel)", q.id); }
+  });
+  f.querySelector("#qTitle").addEventListener("input", e => { q.title = e.target.value; changed(); refreshListItem(ul, questIdx, q.title || "(ohne Titel)", q.id); });
+  f.querySelector("#qDesc").addEventListener("input", e => { q.description = e.target.value; changed(); });
+}
+function refreshListItem(ul, i, title, sub) {
+  const li = ul.querySelector(`li[data-i="${i}"]`);
+  if (li) li.innerHTML = `${esc(title)}<br><span class="sub">${esc(sub)}</span>`;
+}
+document.getElementById("questAdd").addEventListener("click", () => {
+  project.quests.push({ id: nextId("quest_", project.quests), title: "", description: "" });
+  questIdx = project.quests.length - 1; changed(); renderQuests();
+  document.getElementById("qTitle").focus();
+});
+document.getElementById("questDel").addEventListener("click", () => {
+  const q = project.quests[questIdx]; if (!q) return;
+  if (!confirm(`Quest "${q.title || q.id}" wirklich löschen?`)) return;
+  project.quests.splice(questIdx, 1); questIdx = Math.max(0, questIdx - 1); changed(); renderQuests();
+});
+
+/* =====================================================================
+   Gegner
+   ===================================================================== */
+const STATS = [
+  ["strength", "Stärke"], ["constitution", "Kondition"], ["dexterity", "Beweglichkeit"], ["intelligence", "Intelligenz"]
+];
+const STAT_MAX = 100;
+let enemyIdx = 0;
+function renderEnemies() {
+  const ul = document.getElementById("enemyList");
+  if (enemyIdx >= project.enemies.length) enemyIdx = project.enemies.length - 1;
+  ul.innerHTML = project.enemies.map((e, i) => `<li data-i="${i}" class="${i === enemyIdx ? "sel" : ""}">${esc(e.name || "(ohne Namen)")}<br><span class="sub">${esc(e.id)}</span></li>`).join("")
+    || `<li class="sub" style="cursor:default">noch keine Gegner</li>`;
+  ul.querySelectorAll("li[data-i]").forEach(li => li.addEventListener("click", () => { enemyIdx = +li.dataset.i; renderEnemies(); }));
+  document.getElementById("enemyDel").disabled = !project.enemies.length;
+  const f = document.getElementById("enemyForm"), en = project.enemies[enemyIdx];
+  if (!en) { f.innerHTML = `<div class="empty">Lege links einen neuen Gegner an.</div>`; return; }
+  f.innerHTML = `
+    <h2>Gegner bearbeiten</h2>
+    <label>ID</label><input type="text" id="eId" value="${esc(en.id)}"><div class="err" id="eIdErr"></div>
+    <label>Name</label><input type="text" id="eName" value="${esc(en.name)}" placeholder="z.B. Mutierte Ratte">
+    <label>Beschreibung</label><textarea id="eDesc" style="min-height:140px" placeholder="Aussehen, Verhalten, Herkunft …">${esc(en.description)}</textarea>
+    <div class="stats">${STATS.map(([k, n]) => `
+      <div><label>${n}</label><input type="number" min="0" max="${STAT_MAX}" data-stat="${k}" value="${en[k]}">
+      <div class="statbar"><div style="width:${Math.min(100, en[k] / STAT_MAX * 100)}%"></div></div></div>`).join("")}
+    </div>
+    <div class="hint">Werte 0–${STAT_MAX}. Wie sie sich im Kampf auswirken, legst du später im Spiel fest.</div>`;
+  f.querySelector("#eId").addEventListener("input", e => {
+    const v = e.target.value.trim(), err = validId(v, project.enemies, en);
+    f.querySelector("#eIdErr").textContent = err;
+    if (!err) { en.id = v; changed(); refreshListItem(ul, enemyIdx, en.name || "(ohne Namen)", en.id); }
+  });
+  f.querySelector("#eName").addEventListener("input", e => { en.name = e.target.value; changed(); refreshListItem(ul, enemyIdx, en.name || "(ohne Namen)", en.id); });
+  f.querySelector("#eDesc").addEventListener("input", e => { en.description = e.target.value; changed(); });
+  f.querySelectorAll("[data-stat]").forEach(inp => inp.addEventListener("input", e => {
+    const v = Math.max(0, Math.min(STAT_MAX, Math.round(+e.target.value || 0)));
+    en[inp.dataset.stat] = v; changed();
+    inp.nextElementSibling.firstElementChild.style.width = (v / STAT_MAX * 100) + "%";
+  }));
+}
+document.getElementById("enemyAdd").addEventListener("click", () => {
+  project.enemies.push({ id: nextId("enemy_", project.enemies), name: "", description: "", strength: 10, constitution: 10, dexterity: 10, intelligence: 10 });
+  enemyIdx = project.enemies.length - 1; changed(); renderEnemies();
+  document.getElementById("eName").focus();
+});
+document.getElementById("enemyDel").addEventListener("click", () => {
+  const en = project.enemies[enemyIdx]; if (!en) return;
+  if (!confirm(`Gegner "${en.name || en.id}" wirklich löschen?`)) return;
+  project.enemies.splice(enemyIdx, 1); enemyIdx = Math.max(0, enemyIdx - 1); changed(); renderEnemies();
+});
+
+/* =====================================================================
+   Projekt / Datei
+   ===================================================================== */
+function renderProject() {
+  document.getElementById("projName").value = project.name;
+  document.getElementById("jsonPreview").textContent = serialize();
+}
+document.getElementById("projName").addEventListener("input", e => { project.name = e.target.value; changed(); });
+document.getElementById("copyJson").addEventListener("click", async () => {
+  try { await navigator.clipboard.writeText(serialize()); document.getElementById("copyInfo").textContent = "kopiert"; }
+  catch (e) { document.getElementById("copyInfo").textContent = "Kopieren nicht möglich – Text in der Vorschau markieren."; }
+});
+
+function fileName() { return (project.name || "projekt").toLowerCase().replace(/[^a-z0-9äöüß]+/g, "_").replace(/^_|_$/g, "") + ".json"; }
+function save() {
+  const blob = new Blob([serialize()], { type: "application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob); a.download = fileName();
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  dirty = false; setStatus("gespeichert als " + fileName());
+}
+function loadProject(p, msg) {
+  project = p; mapIdx = 0; questIdx = 0; enemyIdx = 0; selected = null; undoStack = []; redoStack = [];
+  showTab(currentTab); setStatus(msg);
+}
+document.getElementById("btnSave").addEventListener("click", save);
+document.getElementById("btnOpen").addEventListener("click", () => document.getElementById("fileInput").click());
+document.getElementById("fileInput").addEventListener("change", e => {
+  const f = e.target.files[0]; if (!f) return;
+  f.text().then(t => {
+    try { loadProject(deserialize(t), "geladen: " + f.name); dirty = false; scheduleAutosave(); }
+    catch (err) { alert("Datei konnte nicht geladen werden:\n" + err.message); }
+  });
+  e.target.value = "";
+});
+document.getElementById("btnNew").addEventListener("click", () => {
+  if (!confirm("Neues Projekt anlegen? Nicht gespeicherte Änderungen gehen verloren.")) return;
+  loadProject(toEditable(newProject()), "neues Projekt"); dirty = false; scheduleAutosave();
+});
+
+window.addEventListener("keydown", e => {
+  const typing = /INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName);
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") { e.preventDefault(); save(); return; }
+  if (typing || currentTab !== "maps") return;
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z") { e.preventDefault(); e.shiftKey ? redo() : undo(); return; }
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "y") { e.preventDefault(); redo(); return; }
+  const k = e.key.toLowerCase();
+  if (k === "b") setTool("brush"); if (k === "r") setTool("rect"); if (k === "f") setTool("fill"); if (k === "i") setTool("inspect");
+});
+window.addEventListener("beforeunload", e => { if (dirty) { e.preventDefault(); e.returnValue = ""; } });
+
+/* Start: letzten Stand aus dem Browser wiederherstellen */
+(function init() {
+  let restored = false;
+  try {
+    const s = localStorage.getItem(STORAGE_KEY);
+    if (s) { project = deserialize(s); restored = true; }
+  } catch (e) { project = newProject(); }
+  toEditable(project);
+  showTab("maps");
+  setStatus(restored ? "letzten Stand wiederhergestellt" : "bereit");
+  dirty = false;
+})();
+</script>
+</body>
+</html>
