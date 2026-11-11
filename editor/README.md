@@ -26,6 +26,19 @@ Ultima I/II. Eine einzelne HTML-Datei, keine Installation nötig.
 
 **Gegner** – ID, Name, Beschreibung, Stärke, Kondition, Beweglichkeit, Intelligenz.
 
+**Wiki** – World Building in fünf Kategorien: *Die Welt*, *Hauptstory*,
+*Nebenstorys*, *Gegner & NPCs*, *Gegenstände*.
+* Mit **+** neben einer Kategorie einen Eintrag anlegen, links suchen.
+* Text mit einfachem Markdown (`# Überschrift`, `- Liste`, `**fett**`); „Vorschau“ zeigt
+  ihn formatiert an.
+* Haupt-/Nebenstory-Einträge lassen sich per Häkchen mit **Quest-IDs** verknüpfen,
+  Gegner-&-NPC-Einträge mit **Gegner-IDs**.
+* Zusätzlich kann man im Text auf alles verweisen: `[[quest_001]]` oder
+  `[[enemy_001|die Ratte]]` (auch Karten- und Wiki-IDs). In der Vorschau sind das
+  klickbare Links; kaputte Verweise werden rot durchgestrichen.
+* Quest- und Gegner-Ansicht zeigen unter „Im Wiki erwähnt“, welche Einträge auf sie
+  verweisen. Umbenannte IDs werden überall mitgezogen.
+
 **Speichern / Laden** – „Speichern“ (Strg+S) lädt das Projekt als `.json`
 herunter, „Öffnen…“ liest es wieder ein. Zusätzlich hält der Browser den letzten
 Stand automatisch vor – die JSON-Datei ist aber die eigentliche Sicherung.

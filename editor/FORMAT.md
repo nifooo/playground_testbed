@@ -17,7 +17,8 @@ Lua `dkjson`, Godot `JSON.parse_string`, JavaScript `JSON.parse`, Rust `serde_js
   },
   "maps":    [ ... ],
   "quests":  [ ... ],
-  "enemies": [ ... ]
+  "enemies": [ ... ],
+  "wiki":    [ ... ]
 }
 ```
 
@@ -99,6 +100,37 @@ nutzen, muss aber nicht.
 | `constitution` | Kondition          | 0–100 |
 | `dexterity`    | Beweglichkeit      | 0–100 |
 | `intelligence` | Intelligenz        | 0–100 |
+
+## Wiki (`wiki`)
+
+World-Building-Einträge. Fürs Spiel optional – nützlich z.B. für ein Ingame-Lexikon,
+Questtexte oder einfach als Dokumentation.
+
+```json
+{
+  "id": "wiki_003",
+  "category": "main_story",
+  "kind": "",
+  "title": "Akt 1: Durst",
+  "text": "# Akt 1\nNeu-Eden verdurstet. Der Spieler übernimmt [[quest_001]] …",
+  "quests": ["quest_001"],
+  "enemies": []
+}
+```
+
+| Feld       | Bedeutung |
+|------------|-----------|
+| `category` | `world` (Die Welt), `main_story` (Hauptstory), `side_story` (Nebenstorys), `characters` (Gegner & NPCs), `items` (Gegenstände) |
+| `kind`     | nur bei `characters`: `npc` oder `enemy`, sonst leer |
+| `title`    | Überschrift des Eintrags |
+| `text`     | Freitext mit einfachem Markdown: `# Überschrift`, `## Unterüberschrift`, `- Liste`, `**fett**`, `*kursiv*` |
+| `quests`   | IDs der verknüpften Quests (im Editor bei Haupt-/Nebenstory) |
+| `enemies`  | IDs der verknüpften Gegner (im Editor bei Gegner & NPCs) |
+
+**Verweise im Text:** `[[id]]` oder `[[id|Anzeigetext]]` zeigt auf eine Quest, einen
+Gegner, eine Karte oder einen anderen Wiki-Eintrag mit dieser ID. Benennt man im
+Editor eine ID um, werden die Verknüpfungen und `[[…]]`-Verweise automatisch
+angepasst.
 
 ## IDs
 
