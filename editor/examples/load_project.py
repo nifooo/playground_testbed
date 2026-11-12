@@ -45,6 +45,9 @@ def main():
         print(f"\nGegner {e['id']}: {e['name']}  "
               f"STR {e['strength']} KON {e['constitution']} "
               f"BEW {e['dexterity']} INT {e['intelligence']}")
+    for w in data.get("wiki", []):
+        links = ", ".join(w["quests"] + w["enemies"]) or "-"
+        print(f"\nWiki [{w['category']}] {w['title']}  (verknüpft: {links})")
 
 
 if __name__ == "__main__":

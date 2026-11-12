@@ -135,7 +135,7 @@
   ],
   "quests": [
     {
-      "id": "quest_001",
+      "id": "quest_wasser",
       "title": "Wasser für Neu-Eden",
       "description": "Die Siedlung Neu-Eden hat kein sauberes Wasser mehr. Finde den Wasserfilter im alten Bunker."
     }
@@ -149,6 +149,66 @@
       "constitution": 6,
       "dexterity": 14,
       "intelligence": 2
+    },
+    {
+      "id": "enemy_002",
+      "name": "Ödland-Plünderer",
+      "description": "Streift in Banden durch das Ödland.",
+      "strength": 10,
+      "constitution": 10,
+      "dexterity": 10,
+      "intelligence": 10
+    }
+  ],
+  "wiki": [
+    {
+      "id": "wiki_001",
+      "category": "world",
+      "kind": "",
+      "title": "Der Große Knall",
+      "text": "# Der Große Knall\n2031 fielen die Bomben.\nSeitdem ist das Land **verseucht**.\n\n## Fraktionen\n- Neu-Eden\n- Die Plünderer, siehe [[wiki_003|Banditen]]\n\nKarte: [[map_001]]",
+      "quests": [],
+      "enemies": []
+    },
+    {
+      "id": "wiki_002",
+      "category": "main_story",
+      "kind": "",
+      "title": "Akt 1: Durst",
+      "text": "Neu-Eden verdurstet. Der Spieler übernimmt [[quest_wasser]] und trifft auf [[enemy_001]].",
+      "quests": [
+        "quest_wasser"
+      ],
+      "enemies": []
+    },
+    {
+      "id": "wiki_003",
+      "category": "characters",
+      "kind": "enemy",
+      "title": "Mutierte Ratte",
+      "text": "Kommt in [[wiki_001]] häufig vor.",
+      "quests": [],
+      "enemies": [
+        "enemy_001"
+      ]
+    },
+    {
+      "id": "wiki_004",
+      "category": "side_story",
+      "kind": "",
+      "title": "Der verlorene Hund",
+      "text": "Ein Kind in Neu-Eden vermisst seinen Hund.",
+      "quests": [],
+      "enemies": []
+    },
+    {
+      "id": "wiki_005",
+      "category": "items",
+      "kind": "",
+      "title": "Wasserfilter",
+      "text": "Alter Militärfilter. Macht verseuchtes Wasser trinkbar.",
+      "quests": [],
+      "enemies": []
     }
   ]
 }

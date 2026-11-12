@@ -77,6 +77,26 @@
   .statbar div { height: 100%; background: var(--accent2); }
   .empty { color: var(--dim); padding: 40px; text-align: center; }
 
+  /* Wiki */
+  .wikicat { display: flex; justify-content: space-between; align-items: center; margin: 12px 0 4px; color: var(--accent); font-size: 12px; letter-spacing: 1px; text-transform: uppercase; }
+  .wikicat button { padding: 0 6px; font-size: 12px; }
+  .wikicat .cnt { color: var(--dim); }
+  .chips { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+  .chip { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border: 1px solid var(--line); background: var(--panel2); cursor: pointer; font-size: 12px; }
+  .chip:hover { border-color: var(--accent); color: var(--accent); }
+  .chip .k { color: var(--dim); }
+  .checklist { max-height: 180px; overflow-y: auto; border: 1px solid var(--line); padding: 4px 6px; background: var(--panel); }
+  .checklist label { display: flex; gap: 6px; align-items: center; margin: 2px 0; text-transform: none; letter-spacing: 0; font-size: 13px; color: var(--text); cursor: pointer; }
+  .checklist .sub { color: var(--dim); font-size: 12px; }
+  .preview { border: 1px solid var(--line); background: var(--panel); padding: 10px 14px; min-height: 360px; line-height: 1.5; }
+  .preview h3 { color: var(--accent); font-size: 16px; margin: 12px 0 6px; }
+  .preview h4 { color: var(--accent2); font-size: 14px; margin: 10px 0 4px; }
+  .preview p { margin: 0 0 10px; }
+  .preview ul { margin: 0 0 10px; padding-left: 20px; }
+  .preview a.ref { color: var(--accent); text-decoration: underline; cursor: pointer; }
+  .preview a.ref.broken { color: var(--danger); text-decoration: line-through; cursor: help; }
+  .backlinks { margin-top: 14px; }
+
   pre.json { background: var(--panel); border: 1px solid var(--line); padding: 10px; font-size: 12px; overflow: auto; max-height: 70vh; white-space: pre; }
 
   @media (max-width: 900px) {
@@ -94,6 +114,7 @@
     <button data-tab="maps" class="active">Karten</button>
     <button data-tab="quests">Quests</button>
     <button data-tab="enemies">Gegner</button>
+    <button data-tab="wiki">Wiki</button>
     <button data-tab="project">Projekt / JSON</button>
   </nav>
   <span class="spacer"></span>
@@ -209,6 +230,18 @@
     <div class="content"><div class="form" id="enemyForm"></div></div>
   </section>
 
+  <!-- ============ WIKI ============ -->
+  <section class="view" id="view-wiki">
+    <aside class="sidebar">
+      <h2>Wiki</h2>
+      <input type="text" id="wikiSearch" placeholder="Suchen…" style="width:100%">
+      <div id="wikiTree"></div>
+      <div class="sep"></div>
+      <button id="wikiDel" class="danger">Eintrag löschen</button>
+    </aside>
+    <div class="content"><div class="form" id="wikiForm" style="max-width:860px"></div></div>
+  </section>
+
   <!-- ============ PROJEKT ============ -->
   <section class="view" id="view-project">
     <div class="content">
@@ -217,7 +250,7 @@
         <label>Projektname</label>
         <input type="text" id="projName">
         <div class="hint">
-          Gespeichert wird alles in <b>einer JSON-Datei</b> (Karten, Quests, Gegner). Das Format ist in
+          Gespeichert wird alles in <b>einer JSON-Datei</b> (Karten, Quests, Gegner, Wiki). Das Format ist in
           <code>editor/FORMAT.md</code> beschrieben und lässt sich in jeder Sprache einlesen.
           Zusätzlich speichert der Editor automatisch im Browser zwischen.
         </div>
@@ -306,7 +339,7 @@ function newProject() {
   return {
     format: FORMAT, version: VERSION, name: "Mein Endzeit-RPG",
     maps: [makeMap("map_001", "Ödland", 40, 30)],
-    quests: [], enemies: []
+    quests: [], enemies: [], wiki: []
   };
 }
 
@@ -338,6 +371,10 @@ function serialize() {
     enemies: project.enemies.map(e => ({
       id: e.id, name: e.name, description: e.description,
       strength: e.strength, constitution: e.constitution, dexterity: e.dexterity, intelligence: e.intelligence
+    })),
+    wiki: project.wiki.map(w => ({
+      id: w.id, category: w.category, kind: w.category === "characters" ? w.kind : "",
+      title: w.title, text: w.text, quests: w.quests.slice(), enemies: w.enemies.slice()
     }))
   };
   return JSON.stringify(out, null, 2);
@@ -364,6 +401,13 @@ function deserialize(text) {
       id: e.id, name: e.name || "", description: e.description || "",
       strength: +e.strength || 0, constitution: +e.constitution || 0,
       dexterity: +e.dexterity || 0, intelligence: +e.intelligence || 0
+    })),
+    wiki: (d.wiki || []).map(w => ({
+      id: w.id, category: WIKI_CATS.some(c => c.key === w.category) ? w.category : "world",
+      kind: w.kind === "enemy" ? "enemy" : "npc",
+      title: w.title || "", text: w.text || "",
+      quests: Array.isArray(w.quests) ? w.quests.slice() : [],
+      enemies: Array.isArray(w.enemies) ? w.enemies.slice() : []
     }))
   };
   return toEditable(p);
@@ -415,6 +459,7 @@ function showTab(tab) {
   if (tab === "maps") renderMapsTab();
   if (tab === "quests") renderQuests();
   if (tab === "enemies") renderEnemies();
+  if (tab === "wiki") renderWiki();
   if (tab === "project") renderProject();
 }
 
@@ -713,11 +758,13 @@ function renderQuests() {
     <h2>Quest bearbeiten</h2>
     <label>ID</label><input type="text" id="qId" value="${esc(q.id)}"><div class="err" id="qIdErr"></div>
     <label>Titel</label><input type="text" id="qTitle" value="${esc(q.title)}" placeholder="z.B. Wasser für Neu-Eden">
-    <label>Quest-Beschreibung</label><textarea id="qDesc" placeholder="Worum geht es in dieser Quest?">${esc(q.description)}</textarea>`;
+    <label>Quest-Beschreibung</label><textarea id="qDesc" placeholder="Worum geht es in dieser Quest?">${esc(q.description)}</textarea>
+    ${backlinksHtml("quests", q.id)}`;
+  bindNavChips(f);
   f.querySelector("#qId").addEventListener("input", e => {
     const v = e.target.value.trim(), err = validId(v, project.quests, q);
     f.querySelector("#qIdErr").textContent = err;
-    if (!err) { q.id = v; changed(); refreshListItem(ul, questIdx, q.title || "(ohne Titel)", q.id); }
+    if (!err && v !== q.id) { renameRefs("quests", q.id, v); q.id = v; changed(); refreshListItem(ul, questIdx, q.title || "(ohne Titel)", q.id); }
   });
   f.querySelector("#qTitle").addEventListener("input", e => { q.title = e.target.value; changed(); refreshListItem(ul, questIdx, q.title || "(ohne Titel)", q.id); });
   f.querySelector("#qDesc").addEventListener("input", e => { q.description = e.target.value; changed(); });
@@ -734,6 +781,7 @@ document.getElementById("questAdd").addEventListener("click", () => {
 document.getElementById("questDel").addEventListener("click", () => {
   const q = project.quests[questIdx]; if (!q) return;
   if (!confirm(`Quest "${q.title || q.id}" wirklich löschen?`)) return;
+  dropRefs("quests", q.id);
   project.quests.splice(questIdx, 1); questIdx = Math.max(0, questIdx - 1); changed(); renderQuests();
 });
 
@@ -763,11 +811,13 @@ function renderEnemies() {
       <div><label>${n}</label><input type="number" min="0" max="${STAT_MAX}" data-stat="${k}" value="${en[k]}">
       <div class="statbar"><div style="width:${Math.min(100, en[k] / STAT_MAX * 100)}%"></div></div></div>`).join("")}
     </div>
-    <div class="hint">Werte 0–${STAT_MAX}. Wie sie sich im Kampf auswirken, legst du später im Spiel fest.</div>`;
+    <div class="hint">Werte 0–${STAT_MAX}. Wie sie sich im Kampf auswirken, legst du später im Spiel fest.</div>
+    ${backlinksHtml("enemies", en.id)}`;
+  bindNavChips(f);
   f.querySelector("#eId").addEventListener("input", e => {
     const v = e.target.value.trim(), err = validId(v, project.enemies, en);
     f.querySelector("#eIdErr").textContent = err;
-    if (!err) { en.id = v; changed(); refreshListItem(ul, enemyIdx, en.name || "(ohne Namen)", en.id); }
+    if (!err && v !== en.id) { renameRefs("enemies", en.id, v); en.id = v; changed(); refreshListItem(ul, enemyIdx, en.name || "(ohne Namen)", en.id); }
   });
   f.querySelector("#eName").addEventListener("input", e => { en.name = e.target.value; changed(); refreshListItem(ul, enemyIdx, en.name || "(ohne Namen)", en.id); });
   f.querySelector("#eDesc").addEventListener("input", e => { en.description = e.target.value; changed(); });
@@ -785,8 +835,200 @@ document.getElementById("enemyAdd").addEventListener("click", () => {
 document.getElementById("enemyDel").addEventListener("click", () => {
   const en = project.enemies[enemyIdx]; if (!en) return;
   if (!confirm(`Gegner "${en.name || en.id}" wirklich löschen?`)) return;
+  dropRefs("enemies", en.id);
   project.enemies.splice(enemyIdx, 1); enemyIdx = Math.max(0, enemyIdx - 1); changed(); renderEnemies();
 });
+
+/* =====================================================================
+   Wiki (World Building)
+   ===================================================================== */
+const WIKI_CATS = [
+  { key: "world",      name: "Die Welt",           links: [] },
+  { key: "main_story", name: "Hauptstory",         links: ["quests"] },
+  { key: "side_story", name: "Nebenstorys",        links: ["quests"] },
+  { key: "characters", name: "Gegner & NPCs",      links: ["enemies"] },
+  { key: "items",      name: "Gegenstände",        links: [] }
+];
+const CAT_BY_KEY = Object.fromEntries(WIKI_CATS.map(c => [c.key, c]));
+let wikiSel = null;         // ID des gewählten Eintrags
+let wikiMode = "edit";      // "edit" | "preview"
+let wikiFilter = "";
+
+// Alles, worauf man mit [[id]] verweisen kann
+function lookupRef(id) {
+  let x;
+  if ((x = project.wiki.find(w => w.id === id))) return { type: "wiki", id, label: x.title || id, kind: CAT_BY_KEY[x.category].name };
+  if ((x = project.quests.find(q => q.id === id))) return { type: "quest", id, label: x.title || id, kind: "Quest" };
+  if ((x = project.enemies.find(e => e.id === id))) return { type: "enemy", id, label: x.name || id, kind: "Gegner" };
+  if ((x = project.maps.find(m => m.id === id))) return { type: "map", id, label: x.name || id, kind: "Karte" };
+  return null;
+}
+function goTo(type, id) {
+  if (type === "wiki") { wikiSel = id; wikiMode = "preview"; showTab("wiki"); }
+  if (type === "quest") { questIdx = project.quests.findIndex(q => q.id === id); showTab("quests"); }
+  if (type === "enemy") { enemyIdx = project.enemies.findIndex(e => e.id === id); showTab("enemies"); }
+  if (type === "map") { mapIdx = project.maps.findIndex(m => m.id === id); selected = null; undoStack = []; redoStack = []; showTab("maps"); }
+}
+function chip(type, id) {
+  const r = lookupRef(id);
+  const label = r ? r.label : id + " (fehlt)";
+  return `<span class="chip" data-nav="${type}" data-id="${esc(id)}"><span class="k">${type === "quest" ? "Quest" : type === "enemy" ? "Gegner" : r ? r.kind : ""}</span>${esc(label)}</span>`;
+}
+function bindNavChips(root) {
+  root.querySelectorAll("[data-nav]").forEach(el => el.addEventListener("click", e => { e.preventDefault(); goTo(el.dataset.nav, el.dataset.id); }));
+}
+const refRegex = /\[\[([A-Za-z0-9_\-]+)(?:\|([^\]]*))?\]\]/g;
+function mentions(text, id) { return [...text.matchAll(refRegex)].some(m => m[1] === id); }
+// Wiki-Einträge, die auf eine Quest / einen Gegner / einen Wiki-Eintrag zeigen
+function backlinks(listKey, id) {
+  return project.wiki.filter(w => (listKey !== "wiki" && w[listKey].includes(id)) || (w.id !== id && mentions(w.text, id)));
+}
+function backlinksHtml(listKey, id) {
+  const bl = backlinks(listKey, id);
+  return `<div class="backlinks"><label>Im Wiki erwähnt</label>${bl.length
+    ? `<div class="chips">${bl.map(w => chip("wiki", w.id)).join("")}</div>`
+    : `<div class="hint">Noch kein Wiki-Eintrag verweist hierauf.</div>`}</div>`;
+}
+function renameRefs(listKey, oldId, newId) {
+  project.wiki.forEach(w => {
+    if (listKey !== "wiki") w[listKey] = w[listKey].map(x => x === oldId ? newId : x);
+    w.text = w.text.replace(refRegex, (m, id, label) => id === oldId ? `[[${newId}${label !== undefined ? "|" + label : ""}]]` : m);
+  });
+}
+function dropRefs(listKey, id) {
+  project.wiki.forEach(w => { if (listKey !== "wiki") w[listKey] = w[listKey].filter(x => x !== id); });
+}
+
+// Mini-Markdown: # Überschrift, ## Unterüberschrift, - Liste, **fett**, *kursiv*, [[id]] / [[id|Text]]
+function renderMarkup(text) {
+  const inline = s => esc(s)
+    .replace(/\*\*(.+?)\*\*/g, "<b>$1</b>")
+    .replace(/\*(.+?)\*/g, "<i>$1</i>")
+    .replace(/\[\[([A-Za-z0-9_\-]+)(?:\|([^\]]*))?\]\]/g, (m, id, label) => {
+      const r = lookupRef(id);
+      if (!r) return `<a class="ref broken" title="Keine Quest, kein Gegner, kein Wiki-Eintrag und keine Karte mit ID ${id}">${label || id}</a>`;
+      return `<a class="ref" data-nav="${r.type}" data-id="${id}" title="${r.kind}: ${esc(r.id)}">${label || esc(r.label)}</a>`;
+    });
+  let html = "", para = [], list = [];
+  const flush = () => {
+    if (para.length) { html += `<p>${para.map(inline).join("<br>")}</p>`; para = []; }
+    if (list.length) { html += `<ul>${list.map(l => `<li>${inline(l)}</li>`).join("")}</ul>`; list = []; }
+  };
+  for (const line of text.split("\n")) {
+    if (/^##\s/.test(line)) { flush(); html += `<h4>${inline(line.slice(3))}</h4>`; }
+    else if (/^#\s/.test(line)) { flush(); html += `<h3>${inline(line.slice(2))}</h3>`; }
+    else if (/^[-*]\s/.test(line)) { if (para.length) flush(); list.push(line.slice(2)); }
+    else if (!line.trim()) flush();
+    else { if (list.length) flush(); para.push(line); }
+  }
+  flush();
+  return html || `<div class="hint">Noch kein Text.</div>`;
+}
+
+function renderWiki() {
+  if (wikiSel && !project.wiki.some(w => w.id === wikiSel)) wikiSel = null;
+  if (!wikiSel && project.wiki.length) wikiSel = project.wiki[0].id;
+  const tree = document.getElementById("wikiTree"), f = wikiFilter.toLowerCase();
+  tree.innerHTML = WIKI_CATS.map(c => {
+    const all = project.wiki.filter(w => w.category === c.key);
+    const shown = all.filter(w => !f || (w.title + " " + w.id + " " + w.text).toLowerCase().includes(f));
+    return `<div class="wikicat"><span>${c.name} <span class="cnt">${all.length}</span></span><button data-addcat="${c.key}" title="Neuer Eintrag in „${c.name}“">+</button></div>
+      <ul class="list">${shown.map(w => `<li data-wid="${esc(w.id)}" class="${w.id === wikiSel ? "sel" : ""}">${esc(w.title || "(ohne Titel)")}${w.category === "characters" ? ` <span class="sub">${w.kind === "enemy" ? "Gegner" : "NPC"}</span>` : ""}</li>`).join("")}</ul>`;
+  }).join("");
+  tree.querySelectorAll("[data-addcat]").forEach(b => b.addEventListener("click", () => addWiki(b.dataset.addcat)));
+  tree.querySelectorAll("li[data-wid]").forEach(li => li.addEventListener("click", () => { wikiSel = li.dataset.wid; renderWiki(); }));
+  document.getElementById("wikiDel").disabled = !wikiSel;
+  renderWikiForm();
+}
+function addWiki(cat) {
+  const w = { id: nextId("wiki_", project.wiki), category: cat, kind: "npc", title: "", text: "", quests: [], enemies: [] };
+  project.wiki.push(w); wikiSel = w.id; wikiMode = "edit"; wikiFilter = ""; document.getElementById("wikiSearch").value = "";
+  changed(); renderWiki();
+  document.getElementById("wTitle").focus();
+}
+document.getElementById("wikiSearch").addEventListener("input", e => { wikiFilter = e.target.value; renderWiki(); });
+document.getElementById("wikiDel").addEventListener("click", () => {
+  const w = project.wiki.find(x => x.id === wikiSel); if (!w) return;
+  if (!confirm(`Wiki-Eintrag "${w.title || w.id}" wirklich löschen?`)) return;
+  project.wiki = project.wiki.filter(x => x !== w); wikiSel = null; changed(); renderWiki();
+});
+function updateWikiListItem(w) {
+  const li = document.querySelector(`#wikiTree li[data-wid="${CSS.escape(w.id)}"]`);
+  if (li) li.innerHTML = `${esc(w.title || "(ohne Titel)")}${w.category === "characters" ? ` <span class="sub">${w.kind === "enemy" ? "Gegner" : "NPC"}</span>` : ""}`;
+}
+function linkSection(w, listKey) {
+  const items = project[listKey];
+  const isQ = listKey === "quests";
+  const label = isQ ? "Verknüpfte Quests" : "Verknüpfte Gegner";
+  const missing = w[listKey].filter(id => !items.some(x => x.id === id));
+  return `<label>${label}</label>
+    ${items.length || missing.length ? `<div class="checklist">
+      ${items.map(x => `<label><input type="checkbox" data-link="${listKey}" value="${esc(x.id)}" ${w[listKey].includes(x.id) ? "checked" : ""}>
+        ${esc((isQ ? x.title : x.name) || "(ohne Titel)")} <span class="sub">${esc(x.id)}</span></label>`).join("")}
+      ${missing.map(id => `<label><input type="checkbox" data-link="${listKey}" value="${esc(id)}" checked> <span class="err">${esc(id)} (existiert nicht mehr)</span></label>`).join("")}
+    </div>` : `<div class="hint">Noch keine ${isQ ? "Quests" : "Gegner"} angelegt – das geht im Tab „${isQ ? "Quests" : "Gegner"}“.</div>`}
+    <div class="chips" data-chips="${listKey}">${w[listKey].map(id => chip(isQ ? "quest" : "enemy", id)).join("")}</div>`;
+}
+function renderWikiForm() {
+  const f = document.getElementById("wikiForm"), w = project.wiki.find(x => x.id === wikiSel);
+  if (!w) {
+    f.innerHTML = `<div class="empty">Lege links mit <b>+</b> einen Eintrag in einer Kategorie an:<br><br>
+      Die Welt · Hauptstory · Nebenstorys · Gegner &amp; NPCs · Gegenstände</div>`;
+    return;
+  }
+  const cat = CAT_BY_KEY[w.category];
+  // Verknüpfungen: die passenden der Kategorie, plus vorhandene aus einer früheren Kategorie
+  const linkKeys = ["quests", "enemies"].filter(k => cat.links.includes(k) || w[k].length);
+  f.innerHTML = `
+    <h2>${esc(cat.name)}</h2>
+    <div class="row" style="align-items:flex-end">
+      <div style="flex:2;min-width:200px"><label>Titel</label><input type="text" id="wTitle" style="width:100%" value="${esc(w.title)}" placeholder="z.B. Der Große Knall"></div>
+      <div style="flex:1;min-width:140px"><label>ID</label><input type="text" id="wId" style="width:100%" value="${esc(w.id)}"></div>
+      <div style="min-width:150px"><label>Kategorie</label><select id="wCat" style="width:100%">${WIKI_CATS.map(c => `<option value="${c.key}" ${c.key === w.category ? "selected" : ""}>${c.name}</option>`).join("")}</select></div>
+      ${w.category === "characters" ? `<div style="min-width:100px"><label>Art</label><select id="wKind" style="width:100%">
+        <option value="npc" ${w.kind === "npc" ? "selected" : ""}>NPC</option><option value="enemy" ${w.kind === "enemy" ? "selected" : ""}>Gegner</option></select></div>` : ""}
+    </div>
+    <div class="err" id="wIdErr"></div>
+    <div class="row" style="justify-content:space-between;margin-top:10px">
+      <label style="margin:0">Text</label>
+      <div class="row"><button data-wmode="edit" class="${wikiMode === "edit" ? "active" : ""}">Schreiben</button><button data-wmode="preview" class="${wikiMode === "preview" ? "active" : ""}">Vorschau</button></div>
+    </div>
+    <div style="margin-top:4px">${wikiMode === "edit"
+      ? `<textarea id="wText" style="min-height:360px" placeholder="Hier schreiben …">${esc(w.text)}</textarea>
+         <div class="hint"><b># Überschrift</b> · <b>## Unterüberschrift</b> · <b>- Liste</b> · <b>**fett**</b> · <b>*kursiv*</b> ·
+         Verweis: <b>[[quest_001]]</b> oder <b>[[enemy_001|die Ratte]]</b> – funktioniert mit IDs von Quests, Gegnern, Karten und Wiki-Einträgen.</div>`
+      : `<div class="preview" id="wPreview">${renderMarkup(w.text)}</div>`}</div>
+    ${linkKeys.map(k => linkSection(w, k)).join("")}
+    ${backlinksHtml("wiki", w.id)}`;
+  bindNavChips(f);
+  const tree = document.getElementById("wikiTree");
+  f.querySelector("#wTitle").addEventListener("input", e => { w.title = e.target.value; changed(); updateWikiListItem(w); });
+  f.querySelector("#wId").addEventListener("input", e => {
+    const v = e.target.value.trim(), err = validId(v, project.wiki, w);
+    f.querySelector("#wIdErr").textContent = err;
+    if (!err && v !== w.id) {
+      const li = tree.querySelector(`li[data-wid="${CSS.escape(w.id)}"]`);
+      renameRefs("wiki", w.id, v); w.id = v; wikiSel = v; if (li) li.dataset.wid = v; changed();
+    }
+  });
+  f.querySelector("#wCat").addEventListener("change", e => { w.category = e.target.value; changed(); renderWiki(); });
+  const kind = f.querySelector("#wKind");
+  if (kind) kind.addEventListener("change", e => { w.kind = e.target.value; changed(); updateWikiListItem(w); });
+  f.querySelectorAll("[data-wmode]").forEach(b => b.addEventListener("click", () => { wikiMode = b.dataset.wmode; renderWikiForm(); }));
+  const ta = f.querySelector("#wText");
+  if (ta) ta.addEventListener("input", e => { w.text = e.target.value; changed(); });
+  f.querySelectorAll("[data-link]").forEach(cb => cb.addEventListener("change", () => {
+    const k = cb.dataset.link;
+    w[k] = cb.checked ? [...new Set([...w[k], cb.value])] : w[k].filter(x => x !== cb.value);
+    // Reihenfolge wie in der Quest-/Gegnerliste halten
+    const order = project[k].map(x => x.id);
+    w[k].sort((a, b) => (order.indexOf(a) + 1 || 1e9) - (order.indexOf(b) + 1 || 1e9));
+    changed();
+    const box = f.querySelector(`[data-chips="${k}"]`);
+    box.innerHTML = w[k].map(id => chip(k === "quests" ? "quest" : "enemy", id)).join("");
+    bindNavChips(box);
+  }));
+}
 
 /* =====================================================================
    Projekt / Datei
@@ -811,7 +1053,7 @@ function save() {
   dirty = false; setStatus("gespeichert als " + fileName());
 }
 function loadProject(p, msg) {
-  project = p; mapIdx = 0; questIdx = 0; enemyIdx = 0; selected = null; undoStack = []; redoStack = [];
+  project = p; mapIdx = 0; questIdx = 0; enemyIdx = 0; wikiSel = null; selected = null; undoStack = []; redoStack = [];
   showTab(currentTab); setStatus(msg);
 }
 document.getElementById("btnSave").addEventListener("click", save);
