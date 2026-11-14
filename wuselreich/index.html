@@ -579,6 +579,7 @@ function renderTerrain(){
       else if(t==1){if(v<.4){c.fillStyle='rgba(150,120,70,.35)';c.fillRect(x+ox,y+oy,2,1)}}
       else if(t==2){if(k<5){c.fillStyle=v<.5?'rgba(30,26,30,.30)':'rgba(255,255,255,.2)';c.fillRect(x+ox,y+oy,v<.5?3:2,v<.25?2:1)}}
       else if(k<2){c.fillStyle='rgba(255,255,255,.09)';c.fillRect(x+ox,y+oy,5+v*9,1)}}}
+  initAmbient();
 }
 
 /* ============ Zeichnen: Waren, Gebäude, Figuren ============ */
@@ -1022,6 +1023,55 @@ function unitPos(u){
   if(u.k=='f'){const f=Math.min(1,u.t/Math.max(.01,u.T-1.2));return[fx(u.from)+(fx(u.to)-fx(u.from))*f,py(u.from)+(py(u.to)-py(u.from))*f]}
   if(u.i<0)return null;const k=Math.min(u.p.length-2,Math.floor(u.i)),f=Math.min(1,u.i-k),a=u.p[k],b=u.p[k+1];
   let x=fx(a)+(fx(b)-fx(a))*f,y=py(a)+(py(b)-py(a))*f;if(u.wait){x+=((u.id%5)-2)*5;y+=(u.id%3)*3}return[x,y]}
+/* ============ Ambiente: Tiere, Vögel, Fische, Wellen (nur Anzeige) ============ */
+let amb={an:[],birds:[],jumps:[],shore:[],jt:0};
+function initAmbient(){
+  amb={an:[],birds:[],jumps:[],shore:[],jt:1};
+  const cand=[];
+  for(let i=0;i<N;i++){
+    if(G.t[i]==0){for(let d=0;d<6;d++){const j=nb(i,d);if(j>=0&&G.t[j]!=0)amb.shore.push(i,j)}continue}
+    if(G.t[i]!=1||G.obj[i]||G.bl[i]||G.fl[i]||G.rd[i])continue;let tr=0;for(let d=0;d<6;d++){const j=nb(i,d);if(j>=0&&G.obj[j]==1)tr++}if(tr>=2)cand.push(i)}
+  const mk=(k,n)=>{for(let q=0;q<n&&cand.length;q++){const i=cand[rnd()*cand.length|0];amb.an.push({k,n:i,tn:i,x:fx(i),y:py(i),tx:fx(i),ty:py(i),st:0,t:rnd()*5,dir:rnd()<.5?1:-1,id:amb.an.length})}};
+  mk('deer',20);mk('rab',30);mk('fox',5);
+  for(let f=0;f<9;f++){const a=(rnd()-.5)*.9+(rnd()<.5?0:Math.PI),sp=40+rnd()*24,x=rnd()*WW,y=rnd()*WH,gull=rnd()<.4,n=1+(rnd()*4|0);
+    for(let k=0;k<n;k++)amb.birds.push({x:x-Math.cos(a)*k*13,y:y+(k%2?1:-1)*k*6,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp*.5,ph:rnd()*6,gull})}
+}
+function tickAmbient(dt){
+  for(const a of amb.an){
+    if(a.st==0){a.t-=dt;if(a.t<=0){const c=[];for(let d=0;d<6;d++){const j=nb(a.n,d);if(j>=0&&G.t[j]==1&&!G.bl[j]&&!G.fl[j]&&!G.rd[j]&&G.obj[j]!=2)c.push(j)}
+      if(c.length){a.tn=c[rnd()*c.length|0];a.tx=fx(a.tn)+(rnd()-.5)*12;a.ty=py(a.tn)+(rnd()-.5)*6;a.st=1}else a.t=3}}
+    else{const dx=a.tx-a.x,dy=a.ty-a.y,d=Math.hypot(dx,dy),sp=(a.k=='deer'?15:a.k=='fox'?24:32)*dt;if(Math.abs(dx)>.5)a.dir=dx>0?1:-1;
+      if(d<=sp){a.x=a.tx;a.y=a.ty;a.n=a.tn;a.st=0;a.t=a.k=='rab'?(rnd()<.5?.15:1+rnd()*4):2+rnd()*7}else{a.x+=dx/d*sp;a.y+=dy/d*sp}}}
+  for(const b of amb.birds){b.x+=b.vx*dt;b.y+=b.vy*dt;if(b.x<-140)b.x=WW+120;else if(b.x>WW+140)b.x=-120;if(b.y<-140)b.y=WH+120;else if(b.y>WH+140)b.y=-120}
+  for(let i=amb.jumps.length-1;i>=0;i--){amb.jumps[i].t+=dt;if(amb.jumps[i].t>1.5)amb.jumps.splice(i,1)}
+  amb.jt-=dt;if(amb.jt<=0){amb.jt=.5+rnd()*1.1;
+    for(let k=0;k<8;k++){const wx=cam.x+rnd()*vw/cam.z,wy=cam.y+rnd()*vh/cam.z,n=nodeAt(wx,wy);if(n<0||G.t[n]!=0)continue;let ok=true;for(let d=0;d<6;d++){const j=nb(n,d);if(j<0||G.t[j]!=0)ok=false}
+      if(ok){amb.jumps.push({x:fx(n)+(rnd()-.5)*20,y:fy0(n)+(rnd()-.5)*10,t:0,dir:rnd()<.5?1:-1});break}}}
+}
+function drawAnimal(c,a,time){
+  const mv=a.st==1,L=(x0,y0,x1,y1,col,w)=>{c.strokeStyle=col;c.lineWidth=w;c.beginPath();c.moveTo(x0,y0);c.lineTo(x1,y1);c.stroke()},
+    E=(x,y,rx,ry,col,rot)=>{c.fillStyle=col;c.beginPath();c.ellipse(x,y,rx,ry,rot||0,0,7);c.fill()};
+  c.save();c.translate(a.x,a.y);c.scale(a.dir,1);c.lineCap='round';
+  if(a.k=='deer'){const s=mv?Math.sin(time*9+a.id):0,graze=!mv&&((a.id+Math.floor(time/5))%3==0);
+    E(0,0,6.5,1.8,'rgba(0,0,0,.22)');
+    L(-3.4,-6,-3.4-s*1.8,0,'#6f4a26',1.2);L(3,-6,3+s*1.8,0,'#6f4a26',1.2);L(-2.2,-6,-2.2+s*1.8,0,'#8a5f34',1.2);L(4,-6,4-s*1.8,0,'#8a5f34',1.2);
+    E(0,-8,5.6,3,'#a67440');E(.5,-6.8,4.2,1.6,'#c79a62');E(-5.4,-9,1.1,1.4,'#f4f0e7');
+    if(a.id%4==1)for(const[x,y]of[[-2,-9.4],[.4,-10],[2,-9]]){c.fillStyle='rgba(255,245,220,.7)';c.fillRect(x,y,.9,.9)}
+    const hx=graze?8:6.8,hy=graze?-3.2:-14.2;L(4,-9.2,hx-.6,hy+1,'#a67440',2.4);E(hx,hy,2.3,1.5,'#a67440',graze?.7:-.25);E(hx+1.8,hy+(graze?1:.3),.6,.5,'#2a1c10');
+    L(hx-1.2,hy-1,hx-2.2,hy-2.8,'#8a5f34',1.1);c.fillStyle='#1a120a';c.fillRect(hx+.2,hy-.7,.8,.8);
+    if(a.id%3==0){c.strokeStyle='#d9c9a0';c.lineWidth=.8;c.beginPath();c.moveTo(hx-.6,hy-1.2);c.lineTo(hx-1.4,hy-5.5);c.moveTo(hx-1,hy-3.4);c.lineTo(hx+.8,hy-5);c.moveTo(hx-1.3,hy-4.6);c.lineTo(hx-3,hy-6);c.stroke()}}
+  else if(a.k=='rab'){const hop=mv?Math.abs(Math.sin(time*13+a.id))*3.2:0,sit=!mv&&(a.id+Math.floor(time/3))%2;
+    E(0,0,3.4,1.1,'rgba(0,0,0,.2)');c.translate(0,-hop);
+    E(0,-2.4,3.1,2.2,a.id%3?'#9c8566':'#b9a98c');E(-3,-2.6,1.1,1.1,'#f4f0e7');E(2.6,sit?-5:-4,1.7,1.5,a.id%3?'#9c8566':'#b9a98c');
+    L(2.2,sit?-6:-5,1.6,sit?-9.2:-7.8,'#8a7355',1.1);L(3,sit?-6:-5,3.2,sit?-9.4:-8,'#a8906e',1.1);c.fillStyle='#1a120a';c.fillRect(3.1,sit?-5.4:-4.4,.7,.7);
+    if(mv)L(-2,-1,-3.6+hop*.3,.4,'#8a7355',1.1)}
+  else{const s=mv?Math.sin(time*11+a.id):0;
+    E(0,0,6,1.5,'rgba(0,0,0,.22)');L(-2.6,-3.4,-2.6-s*1.5,0,'#3a2416',1.1);L(2.8,-3.4,2.8+s*1.5,0,'#3a2416',1.1);
+    c.fillStyle='#d9702a';c.beginPath();c.moveTo(-3.6,-5.2);c.quadraticCurveTo(-9,-8+s,-9.6,-3.4);c.quadraticCurveTo(-7,-2.4,-3.4,-3.6);c.fill();E(-9.2,-4,1.3,1.2,'#f4f0e7');
+    E(0,-4.6,4.6,2.1,'#d9702a');E(.6,-3.8,3,1,'#f0d9b8');
+    c.fillStyle='#d9702a';c.beginPath();c.moveTo(3.4,-6.6);c.lineTo(8,-4.6);c.lineTo(4,-3.6);c.fill();c.beginPath();c.moveTo(3.6,-6.4);c.lineTo(4,-9);c.lineTo(5.4,-6);c.fill();c.fillStyle='#1a120a';c.fillRect(7.4,-5,.9,.8);c.fillRect(5.2,-5.8,.7,.7)}
+  c.restore();
+}
 const ulast=new Map();
 function facing(key,x){if(ulast.size>4000)ulast.clear();const p=ulast.get(key);let d=p?p.d:1;if(p){if(x>p.x+.02)d=1;else if(x<p.x-.02)d=-1}ulast.set(key,{x,d});return d}
 function drawTree(c,x,y,g,v,sw){
@@ -1045,9 +1095,22 @@ function draw(time){
   const sx=Math.max(0,x0),sy=Math.max(0,y0),sw=Math.min(WW,x1)-sx,sh=Math.min(WH,y1)-sy;
   if(sw>0&&sh>0)c.drawImage(terrain,sx,sy,sw,sh,sx,sy,sw,sh);
   const r0=Math.max(0,Math.floor((y0-PADT)/TH)-1),r1=Math.min(H-1,Math.ceil((y1-PADT)/TH)+7),c0=Math.max(0,Math.floor(x0/TW)-2),c1=Math.min(W-1,Math.ceil(x1/TW)+1);
-  // Wasserglitzern
-  for(let r=r0;r<=r1;r++)for(let cc=c0;cc<=c1;cc++){const i=r*W+cc;if(G.t[i]!=0)continue;const hv=hash2(i,11,G.seed);if(hv>.45)continue;
-    const a=Math.sin(time*1.6+hv*40);if(a<.2)continue;c.fillStyle=`rgba(225,242,255,${(a-.2)*.4})`;const x=fx(i)+(hv-.2)*30,y=fy0(i)+(hv*97%1-.5)*12;c.fillRect(x,y,7,1);c.fillRect(x+3,y+2,5,1)}
+  // Wellen, Fischschwärme
+  c.lineCap='round';c.lineWidth=1;
+  for(let r=r0;r<=r1;r++)for(let cc=c0;cc<=c1;cc++){const i=r*W+cc;if(G.t[i]!=0)continue;const hv=hash2(i,11,G.seed),X=fx(i),Y=fy0(i);
+    if(hv<.6){const ph=(time*.3+hv*9)%1,a=Math.sin(ph*Math.PI)*.26,x=X+(hv-.3)*34+ph*12,y=Y+(hv*97%1-.5)*14;
+      c.strokeStyle=`rgba(225,242,255,${a})`;c.beginPath();c.moveTo(x-7,y);c.quadraticCurveTo(x,y-2.8,x+7,y);c.stroke()}
+    else if(hv>.965){c.fillStyle='rgba(8,28,60,.38)';for(let k=0;k<5;k++){const an=time*.5*(i%2?1:-1)+k*1.25+hv*20,x=X+Math.cos(an)*(9+k%2*3),y=Y+Math.sin(an)*(4+k%2*1.5),dx=-Math.sin(an)*(i%2?1:-1),dy=Math.cos(an)*.45*(i%2?1:-1),l=Math.hypot(dx,dy)||1,ux=dx/l,uy=dy/l;
+        c.beginPath();c.ellipse(x,y,2.6,1,Math.atan2(uy,ux),0,7);c.fill();c.beginPath();c.moveTo(x-ux*2.2,y-uy*2.2);c.lineTo(x-ux*4.2-uy*1.3,y-uy*4.2+ux*1.3);c.lineTo(x-ux*4.2+uy*1.3,y-uy*4.2-ux*1.3);c.fill()}}}
+  // Brandung am Ufer
+  for(let k=0;k<amb.shore.length;k+=2){const i=amb.shore[k],j=amb.shore[k+1],X=fx(i),Y=fy0(i);if(X<x0-30||X>x1+30||Y<y0-30||Y>y1+30)continue;
+    const dx=fx(j)-X,dy=py(j)-Y,l=Math.hypot(dx,dy),hv=hash2(i,j,5),w=(time*.45+hv)%1,f=.1+w*.26,a=Math.sin(w*Math.PI),px2=-dy/l*6,py2=dx/l*6,mx=X+dx*f,my=Y+dy*f;
+    c.strokeStyle=`rgba(255,255,255,${a*.42})`;c.lineWidth=1+a*.6;c.beginPath();c.moveTo(mx-px2,my-py2);c.quadraticCurveTo(mx+dx/l*1.5,my+dy/l*1.5,mx+px2,my+py2);c.stroke()}
+  // springende Fische
+  for(const J of amb.jumps){const p=J.t/.8;
+    c.strokeStyle=`rgba(235,246,255,${Math.max(0,.6-J.t*.4)})`;c.lineWidth=1;c.beginPath();c.ellipse(J.x-J.dir*7,J.y,2+J.t*8,(2+J.t*8)*.4,0,0,7);c.stroke();
+    if(p>.85){const t2=J.t-.68;c.strokeStyle=`rgba(235,246,255,${Math.max(0,.7-t2*.9)})`;c.beginPath();c.ellipse(J.x+J.dir*7,J.y,2+t2*9,(2+t2*9)*.4,0,0,7);c.stroke()}
+    if(p<1){c.save();c.translate(J.x+J.dir*(p-.5)*14,J.y-Math.sin(p*Math.PI)*11);c.rotate(J.dir*(p-.5)*2.4);c.scale(-J.dir,1);drawGood(c,'fish',0,0,.62);c.restore()}}
   // Grenzsteine
   for(const i of border){if(G.t[i]==0)continue;const x=fx(i),y=py(i);if(x<x0-9||x>x1+9||y<y0-9||y>y1+9)continue;c.fillStyle='rgba(0,0,0,.25)';c.fillRect(x-1,y,4,1.5);c.fillStyle='#d9d4c6';c.fillRect(x-1.5,y-4,3,5);c.fillStyle=PCOL[G.own[i]];c.fillRect(x-1.5,y-5.5,3,2.5);c.strokeStyle='rgba(30,20,10,.6)';c.lineWidth=.6;c.strokeRect(x-1.5,y-5.5,3,6.5)}
   // Wege
@@ -1064,6 +1127,7 @@ function draw(time){
   for(const id in G.blds){const b=G.blds[id],J=b.job;if(!J)continue;const f=J.ph==0?J.t/J.T:J.ph==1?1:1-J.t/J.T;
     const x=fx(b.n)+(fx(J.n)-fx(b.n))*f,y=py(b.n)+(py(J.n)-py(b.n))*f;if(x<x0-20||x>x1+20)continue;
     put(x,y+1,{o:b.o,kind:b.type,carry:J.ph==2?J.c:null,mv:J.ph!=1,work:J.ph==1,ph:b.id,dir:facing('j'+b.id,x)})}
+  for(const a of amb.an){if(a.x<x0-20||a.x>x1+20||a.y<y0-20||a.y>y1+20)continue;put(a.x,a.y,{an:a})}
   const aid=UI.aid&&z>=.7&&UI.mode!='road';
   for(let r=r0;r<=r1;r++){
     for(let cc=c0;cc<=c1;cc++){const i=r*W+cc,x=fx(i),y=py(i),o=G.obj[i];
@@ -1088,10 +1152,15 @@ function draw(time){
         for(let k=0;k<F.g.length;k++)drawGood(c,F.g[k].t,x-9+(k%4)*6,y+3+(k>>2)*5,.6)}
       const bid=G.bl[i];if(bid){const b=G.blds[bid];drawBld(c,b.type,x,y,PCOL[b.o],b.done?1:b.prog,time,BD[b.type].mil&&b.o==0&&b.done?b.g:undefined)}
     }
-    const us=rows[r];if(us)for(const u of us)drawMan(c,u.x,u.y,u.o,G.time,u.mv,u.kind,u.carry,u.dir,u.work,u.ph);
+    const us=rows[r];if(us)for(const u of us)if(u.an)drawAnimal(c,u.an,time);else drawMan(c,u.x,u.y,u.o,G.time,u.mv,u.kind,u.carry,u.dir,u.work,u.ph);
   }
   for(const f of fxs){const x=fx(f.n),y=py(f.n);if(f.k=='fire'){for(let k=0;k<7;k++){const p=(time*1.5+k/7)%1;c.fillStyle=`rgba(255,${110+k*20},30,${.8*(1-p)})`;c.beginPath();c.arc(x+Math.sin(k*2+p*6)*8,y-4-p*24,5*(1-p)+1,0,7);c.fill()}}
     else{c.strokeStyle='#fff7c0';c.lineWidth=1.5;c.beginPath();for(let k=0;k<6;k++){const a=k+time*9;c.moveTo(x+Math.cos(a)*3,y-8+Math.sin(a)*3);c.lineTo(x+Math.cos(a)*9,y-8+Math.sin(a)*9)}c.stroke()}}
+  for(const b of amb.birds){if(b.x<x0-40||b.x>x1+40||b.y<y0-60||b.y>y1+40)continue;const d=b.vx>0?1:-1,fl=Math.sin(time*(b.gull?7:11)+b.ph),gl=Math.sin(time*.7+b.ph)>.55?.25:1,w=fl*gl*3.2;
+    c.fillStyle='rgba(0,0,0,.14)';c.beginPath();c.ellipse(b.x+10,b.y+36,4,1.5,0,0,7);c.fill();
+    c.strokeStyle=b.gull?'#f6f6f2':'#2a2420';c.lineWidth=1.5;c.lineCap='round';c.beginPath();c.moveTo(b.x-5.5,b.y-1.5+w);c.quadraticCurveTo(b.x-2.5,b.y-2.4-w*.3,b.x,b.y);c.quadraticCurveTo(b.x+2.5,b.y-2.4-w*.3,b.x+5.5,b.y-1.5+w);c.stroke();
+    c.fillStyle=b.gull?'#e9e9e4':'#3a302a';c.beginPath();c.ellipse(b.x,b.y+.3,2.4,1.1,0,0,7);c.fill();c.fillStyle=b.gull?'#e9a23a':'#3a302a';c.fillRect(b.x+d*2.2,b.y-.1,1.4*d,.8);
+    if(b.gull){c.fillStyle='#3a3f45';c.fillRect(b.x-6,b.y-2+w,1.3,1);c.fillRect(b.x+4.7,b.y-2+w,1.3,1)}}
   if(UI.sel>=0){const x=fx(UI.sel),y=py(UI.sel),p=1+Math.sin(time*5)*.12;c.strokeStyle='#fff';c.lineWidth=2;c.beginPath();c.ellipse(x,y,13*p,6.5*p,0,0,7);c.stroke()}
   if(UI.mode=='road'&&G.flags[UI.rf]){const n=G.flags[UI.rf].n;c.strokeStyle='#ffd23a';c.lineWidth=2;c.beginPath();c.ellipse(fx(n),py(n),12,6,0,0,7);c.stroke()}
 }
@@ -1102,6 +1171,7 @@ function frame(ts){
   requestAnimationFrame(frame);const now=ts/1000,rdt=Math.min(.1,now-last||0);last=now;
   if(G&&!G.over&&$('modal').hidden){const T=rdt*UI.speed;if(T>0){const n=Math.ceil(T/.034);for(let k=0;k<n;k++)step(T/n)}
     saveT+=rdt;if(saveT>20){saveT=0;save()}}
+  if(G)tickAmbient(rdt*(UI.speed||1));
   uiT+=rdt;if(uiT>.5&&G){uiT=0;updTop();if(!$('panel').hidden&&UI.sel>=0&&UI.mode!='road'&&!$('panel').querySelector('.grid'))showPanel()}
   draw(now);
 }
