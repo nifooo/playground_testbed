@@ -417,8 +417,8 @@ class MainActivity : Activity() {
             val surfaces = arrayListOf(ps, raw.surface)
             if (attempt == 0) {
                 val ySize = map?.getOutputSizes(ImageFormat.YUV_420_888)
-                    ?.filter { abs(it.width * 3 - it.height * 4) <= 16 && it.width in 480..1024 }
-                    ?.minByOrNull { it.width } ?: Size(640, 480)
+                    ?.filter { abs(it.width * 3 - it.height * 4) <= 16 && it.width in 480..1440 && it.height <= 1080 }
+                    ?.maxByOrNull { it.width } ?: Size(640, 480)
                 val yuv = ImageReader.newInstance(ySize.width, ySize.height, ImageFormat.YUV_420_888, 2)
                 yuv.setOnImageAvailableListener({ r -> onYuv(r, l) }, h)
                 yuvReader = yuv
@@ -573,26 +573,40 @@ class MainActivity : Activity() {
             val n = buf.remaining()
             if (yBuf.size < n) yBuf = ByteArray(n)
             buf.get(yBuf, 0, n)
-            val ow = w / 2
-            val oh = h / 2
+            // Zweite Ableitung (Laplace) in voller Aufloesung: unscharfe Kanten sind sanfte Rampen
+            // und ergeben fast 0, nur wirklich scharfe Details schlagen aus.
+            val step = (w / 480).coerceAtLeast(2)
+            val ow = w / step
+            val oh = h / step
             if (peakPixels.size != ow * oh) peakPixels = IntArray(ow * oh)
             val y = yBuf
             val out = peakPixels
             var sum = 0L
             var count = 0
-            val threshold = 34
-            for (oy in 1 until oh - 1) {
-                val row = oy * 2 * stride
-                var o = oy * ow + 1
-                for (ox in 1 until ow - 1) {
-                    val i = row + ox * 2
-                    if (i + stride + 1 >= n) { out[o++] = 0; continue }
-                    val gx = (y[i + 1].toInt() and 0xFF) - (y[i - 1].toInt() and 0xFF)
-                    val gy = (y[i + stride].toInt() and 0xFF) - (y[i - stride].toInt() and 0xFF)
-                    val g = abs(gx) + abs(gy)
-                    out[o++] = if (g > threshold) 0xFF00FF40.toInt() else 0
-                    sum += (g * g).toLong()
-                    count++
+            val threshold = 32
+            for (oy in 0 until oh) {
+                var o = oy * ow
+                for (ox in 0 until ow) {
+                    var best = 0
+                    for (dy in 0 until step) {
+                        val py = oy * step + dy
+                        if (py < 1 || py >= h - 1) continue
+                        val row = py * stride
+                        for (dx in 0 until step) {
+                            val px = ox * step + dx
+                            if (px < 1 || px >= w - 1) continue
+                            val i = row + px
+                            if (i + stride >= n) continue
+                            val c2 = (y[i].toInt() and 0xFF) * 2
+                            val lx = abs(c2 - (y[i - 1].toInt() and 0xFF) - (y[i + 1].toInt() and 0xFF))
+                            val ly = abs(c2 - (y[i - stride].toInt() and 0xFF) - (y[i + stride].toInt() and 0xFF))
+                            val v = if (lx > ly) lx else ly
+                            if (v > best) best = v
+                            sum += (v * v).toLong()
+                            count++
+                        }
+                    }
+                    out[o++] = if (best > threshold) 0xFF00FF40.toInt() else 0
                 }
             }
             sharpness = if (count > 0) (sum / count).toInt() else 0
