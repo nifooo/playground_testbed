@@ -468,7 +468,7 @@ function tickBld(b,dt){
     J.t+=dt;
     if(J.ph==0&&J.t>=J.T){J.ph=1;J.t=0}
     else if(J.ph==1&&J.t>=J.wt){J.ph=2;J.t=0;const n=J.n;J.c=null;
-      if(J.a=='tree'&&G.obj[n]==1){G.obj[n]=0;G.ov[n]=0;J.c='log'}
+      if(J.a=='tree'&&G.obj[n]==1){G.obj[n]=0;G.ov[n]=0;J.c='log';fxs.push({n,k:'fall',t:1.5,s:fx(n)>=fx(b.n)?1:-1})}
       else if(J.a=='plant'&&!G.obj[n]&&!G.fl[n]&&!G.bl[n]&&!G.rd[n]){G.obj[n]=1;G.ov[n]=.05}
       else if(J.a=='stone'&&G.obj[n]==2){if(--G.ov[n]<=0)G.obj[n]=0;J.c='stone'}
       else if(J.a=='fish'){if(rnd()<.85)J.c='fish'}
@@ -782,8 +782,8 @@ const KIND={woodcutter:'wood',sawmill:'sawyer',forester:'forest',quarry:'miner',
 const TOOL={builder:1,geo:1,smith:1,wood:2,miner:3,forest:4,farmer:5,knight:6,fisher:7,sawyer:8,baker:9,butcher:10};
 const HAIR=['#5a3a1c','#2f2118','#b8873a','#9a9ea4','#7a3b1c'],SKIN=['#eebd8e','#e3ad7c','#f2c9a0'],SKIND=['#cf9a6c','#c48d5e','#d6a67c'],PLITE=['#8ab6f6','#f08d78'];
 const ROLLED={smith:1,baker:1,butcher:1,miner:1,wood:1,sawyer:1,farmer:1,fisher:1,miller:1},CHOP={wood:1,miner:1,smith:1,builder:1,geo:1,butcher:1,sawyer:1};
-function drawMan(c,x,y,o,t,mv,kind,carry,dir,work,id){
-  const k=KIND[kind]||kind,p=t*13+id*1.7,sw=mv?Math.sin(p):0,bob=mv?-Math.abs(Math.cos(p))*.7:Math.sin(t*2+id)*.15;
+function drawMan(c,x,y,o,t,mv,kind,carry,dir,work,id,ph0){
+  mv=+mv||0;const k=KIND[kind]||kind,p=ph0===undefined?t*13+id*1.7:ph0,cw=carry?.8:1,sw=mv*Math.sin(p)*cw,bob=-Math.abs(Math.cos(p))*.75*mv*(carry?1.3:1)+Math.sin(t*2+id)*.15*(1-mv);
   const kn=k=='knight',fem=(k=='carrier'||k=='farmer'||k=='baker'||k=='miller')&&id%3==1;
   const skin=SKIN[id%3],skd=SKIND[id%3],hair=HAIR[id%5],OUT='rgba(30,20,10,.7)';
   const tunic=kn?'#aeb6c0':PCOL[o],tdark=kn?'#7f8892':PDARK[o],tlite=kn?'#dde2e8':PLITE[o];
@@ -792,18 +792,24 @@ function drawMan(c,x,y,o,t,mv,kind,carry,dir,work,id){
     E=(x,y,rx,ry,f,rot)=>{c.fillStyle=f;c.beginPath();c.ellipse(x,y,rx,ry,rot||0,0,7);c.fill()},
     P=(pts,f,st)=>{c.beginPath();pts.forEach((q,i)=>i?c.lineTo(q[0],q[1]):c.moveTo(q[0],q[1]));c.closePath();if(f){c.fillStyle=f;c.fill()}if(st){c.strokeStyle=st;c.lineWidth=.45;c.stroke()}},
     L=(pts,col,w)=>{c.beginPath();pts.forEach((q,i)=>i?c.lineTo(q[0],q[1]):c.moveTo(q[0],q[1]));c.strokeStyle=col;c.lineWidth=w;c.stroke()};
-  c.save();c.translate(x,y);c.scale((dir||1)*1.3,1.3);c.lineCap='round';c.lineJoin='round';
+  const dS=dir||1;c.save();c.translate(x,y);c.scale((dS<0?-1:1)*Math.max(.25,Math.abs(dS))*1.3,1.3);c.lineCap='round';c.lineJoin='round';
   E(0,0,4.6,1.5,'rgba(0,0,0,.25)');
   // Arbeitsbewegung
-  let wa=0,lean=mv?.05:0;
-  if(work){if(CHOP[k]){const s2=Math.sin(t*8+id);wa=1.75+(s2>0?s2*.95:s2*.5);lean=.1+(1.75-wa)*.13}
-    else if(k=='farmer'||k=='forest'){wa=.95+Math.sin(t*5+id)*.45;lean=.3}
-    else if(k=='fisher'){wa=1.25+Math.sin(t*1.5)*.06}
-    else if(kn){wa=1.6+Math.sin(t*11+id)*.8;lean=.08}
+  let wa=0,lean=.07*mv,fxp=-1,ges=0;const ez=q=>q*q*(3-2*q),
+    wk=work===true?(CHOP[k]?'chop':k=='farmer'?'mow':k=='forest'?'dig':k=='fisher'?'fish':kn?'fight':'knead'):work;
+  if(wk){
+    if(wk=='chop'||wk=='build'){const u=(t*1.1+id*.31)%1;if(u<.55)wa=.95+ez(u/.55)*1.85;else if(u<.67){const q=(u-.55)/.12;wa=2.8-q*q*2.05}else{const q=(u-.67)/.33;wa=.75+Math.sin(q*Math.PI)*.2*(1-q)+q*.2;fxp=q}lean=.3-(wa-.75)*.16}
+    else if(wk=='mow'){const u=(t*.9+id*.3)%1,q=u<.6?ez(u/.6):1-ez((u-.6)/.4);wa=1.55-q*.9;lean=.22+q*.14}
+    else if(wk=='sow'){const u=(t*.8+id*.3)%1;wa=u<.3?.4+ez(u/.3)*1.3:1.7-ez((u-.3)/.7)*1.3;lean=.1;if(u>.3&&u<.7)fxp=(u-.3)/.4}
+    else if(wk=='dig'){const u=(t*.9+id*.3)%1,q=u<.5?ez(u/.5):1-ez((u-.5)/.5);wa=.55+q*.55;lean=.2+q*.22}
+    else if(wk=='fish'){const u=(t*.22+id*.3)%1;wa=1.25+Math.sin(t*1.5)*.05+(u>.9?Math.sin((u-.9)/.1*Math.PI)*.5:0)}
+    else if(wk=='fight'){const u=(t*1.5+id*.37)%1;wa=u<.5?1.1+ez(u/.5)*1.5:u<.62?2.6-(u-.5)/.12*1.6:1+(u-.62)/.38*.1;lean=u>.5&&u<.75?.22:.05;if(u>.62&&u<.8)fxp=(u-.62)/.18}
     else{wa=1.3+Math.sin(t*4+id)*.3;lean=.12}}
+  else if(mv<.1&&!carry){const g=(t*.11+id*.37)%1;if(g<.14)ges=Math.sin(g/.14*Math.PI)}
+  if(ges&&id%3==1)lean-=ges*.1;
   // Beine
   const hipY=-5.2+bob;
-  const leg=(ph,col,bc)=>{const th=mv?.62*Math.sin(ph):0,kb=mv?.95*Math.max(0,-Math.cos(ph)):0;
+  const leg=(ph,col,bc)=>{const th=.68*cw*mv*Math.sin(ph),kb=mv*(.12+.95*Math.max(0,Math.cos(ph)));
     const kx=Math.sin(th)*2.7,ky=hipY+Math.cos(th)*2.7,fx2=kx+Math.sin(th-kb)*2.7,fy2=ky+Math.cos(th-kb)*2.7;
     L([[0,hipY],[kx,ky],[fx2,fy2]],col,2);L([[kx+(fx2-kx)*.45,ky+(fy2-ky)*.45],[fx2,fy2]],bc,2.2);
     c.save();c.translate(fx2,fy2);c.rotate(-(th-kb)*.6);E(.9,-.1,1.8,.95,bc);c.restore()};
@@ -816,7 +822,7 @@ function drawMan(c,x,y,o,t,mv,kind,carry,dir,work,id){
     L([[sx,sy],[ex+sx,ey]],col,1.9);L([[ex+sx,ey],[hx+sx,hy]],rolled?(far?skd:skin):col,1.7);
     if(!rolled)L([[ex+sx+(hx-ex)*.8,ey+(hy-ey)*.8],[hx+sx,hy]],tlite,1.8);
     E(hx+sx,hy,1.05,1.05,far?skd:skin);return[hx+sx,hy]};
-  if(carry&&!TOOL[k])arm(sw*.5,sw*.5+.4,tdark,1);else arm(sw*.75,sw*.75+.35,tdark,1);
+  if(ges&&id%3==1)arm(ges*2.9,ges*2.7+.3,tdark,1);else if(carry&&!TOOL[k])arm(sw*.5,sw*.5+.4+.2*mv,tdark,1);else arm(sw*.8,sw*.8+.35+.3*mv,tdark,1);
   if(kn){P([[.8,-10.8+bob],[5.6,-10.8+bob],[5.6,-6.6+bob],[3.2,-3.4+bob],[.8,-6.6+bob]],PCOL[o],'#efe9d8');R(2.75,-10+bob,.9,5.4,'#efe9d8');R(1.5,-8.6+bob,3.4,.9,'#efe9d8');E(3.2,-8.2+bob,.7,.7,'#e9c23c')}
   if(k=='geo'){P([[-3.6,-7+bob],[-.8,-7+bob],[-.8,-3.8+bob],[-3.6,-3.8+bob]],'#8a5a2b',OUT)}
   // Rumpf
@@ -877,10 +883,11 @@ function drawMan(c,x,y,o,t,mv,kind,carry,dir,work,id){
   // vorderer Arm mit Werkzeug
   let H,ta;
   if(carry)H=arm(2.45,3.3,tunic);
-  else if(work){H=arm(wa,wa+.35,tunic);ta=k=='fisher'?wa+.9:wa+1.25}
-  else if(TOOL[k]&&mv){H=arm(.75,2.3,tunic);ta=Math.PI+.4}
+  else if(wk){H=arm(wa,wa+.35,tunic);ta=wk=='sow'?undefined:k=='fisher'?wa+.9:wa+1.25}
+  else if(TOOL[k]&&mv>.15){H=arm(.75+sw*.12,2.3,tunic);ta=Math.PI+.4+sw*.06}
   else if(TOOL[k]){H=arm(.3,1.1,tunic);ta=Math.PI-.1}
-  else H=arm(-sw*.75,-sw*.75+.4,tunic);
+  else if(ges){const g3=id%3;H=g3==0?arm(ges*2.3,ges*2.95+.4*(1-ges),tunic):g3==1?arm(ges*2.9,ges*2.7+.4*(1-ges),tunic):arm(-.5*ges,1.5*ges+.4,tunic)}
+  else H=arm(-sw*.8,-sw*.8+.4+.3*mv,tunic);
   if(ta!==undefined&&TOOL[k]){c.save();c.translate(H[0],H[1]);c.rotate(Math.PI-ta);const T=TOOL[k];
     if(T==6){P([[-.7,-1],[-.7,-9],[0,-10.4],[.7,-9],[.7,-1]],'#e9eef2','rgba(60,70,80,.8)');L([[0,-1.4],[0,-8.6]],'rgba(120,130,140,.7)',.3);L([[-2,-1],[2,-1]],'#e9c23c',1.1);L([[0,-1],[0,1.4]],'#6b4a26',1.1);E(0,1.7,.7,.7,'#e9c23c')}
     else if(T==7){L([[0,1],[0,-14]],'#7a552c',.9);L([[0,-14],[work?6:1.5,-9]],'rgba(255,255,255,.8)',.4);if(work)E(6,-8.6,.7,.7,'#d8362c')}
@@ -894,6 +901,8 @@ function drawMan(c,x,y,o,t,mv,kind,carry,dir,work,id){
       else if(T==4){P([[-1.7,-11.4],[1.7,-11.4],[1.4,-7.6],[-1.4,-7.6]],'#9aa2ad',OUT)}
       else if(T==5){c.strokeStyle='#dfe5ea';c.lineWidth=1.1;c.beginPath();c.arc(3.2,-8.2,3.4,Math.PI*.95,Math.PI*1.78);c.stroke()}}
     c.restore()}
+  if(fxp>=0){c.fillStyle=wk=='sow'?'#e9c23c':k=='wood'||k=='sawyer'?'#e9c88a':k=='smith'||kn?'#ffb03a':wk=='build'?'#e2bd7a':'#d5d6d9';c.globalAlpha*=1-fxp;
+    for(let q=0;q<5;q++){const an=-.3-q*.5,r=2+fxp*8;c.fillRect((wk=='sow'?4:5.5)+Math.cos(an)*r,(wk=='sow'?-9:-2.5)+Math.sin(an)*r+fxp*fxp*6,1.1,1.1)}}
   c.restore();
 }
 
@@ -1181,8 +1190,12 @@ function drawAnimal(c,a,time){
     c.fillStyle='#d9702a';c.beginPath();c.moveTo(3.4,-6.6);c.lineTo(8,-4.6);c.lineTo(4,-3.6);c.fill();c.beginPath();c.moveTo(3.6,-6.4);c.lineTo(4,-9);c.lineTo(5.4,-6);c.fill();c.fillStyle='#1a120a';c.fillRect(7.4,-5,.9,.8);c.fillRect(5.2,-5.8,.7,.7)}
   c.restore();
 }
-const ulast=new Map();
-function facing(key,x){if(ulast.size>4000)ulast.clear();const p=ulast.get(key);let d=p?p.d:1;if(p){if(x>p.x+.02)d=1;else if(x<p.x-.02)d=-1}ulast.set(key,{x,d});return d}
+const rs=new Map();
+function anim(key,tx,ty,dt){if(rs.size>5000)rs.clear();let a=rs.get(key);
+  if(!a||Math.hypot(tx-a.x,ty-a.y)>45){a={x:tx,y:ty,ph:a?a.ph:rnd()*6,d:a?a.d:1,ds:a?a.ds:1,sp:0,dx:0};rs.set(key,a);return a}
+  const k=1-Math.exp(-dt*18),nx=a.x+(tx-a.x)*k,ny=a.y+(ty-a.y)*k,dx=nx-a.x,dy=ny-a.y,dist=Math.hypot(dx,dy*1.5);
+  a.ph+=dist*.25;const v=dt>0?dist/dt:0;a.sp+=(Math.min(1,v/45)-a.sp)*Math.min(1,dt*12);
+  a.dx=a.dx*.85+dx;if(a.dx>.25)a.d=1;else if(a.dx<-.25)a.d=-1;a.ds+=(a.d-a.ds)*Math.min(1,dt*13);a.x=nx;a.y=ny;return a}
 function drawTree(c,x,y,g,v,sw){
   c.fillStyle='rgba(0,0,0,.22)';c.beginPath();c.ellipse(x+4*g,y+1,9.5*g,3.2*g,0,0,7);c.fill();
   c.fillStyle='#5b3d1e';c.fillRect(x-1.6*g,y-8*g,3.2*g,8.5*g);c.fillStyle='#7c5830';c.fillRect(x-1.6*g,y-8*g,1.2*g,8.5*g);
@@ -1199,6 +1212,7 @@ function drawTree(c,x,y,g,v,sw){
 function draw(time){
   const c=ctx;c.setTransform(dpr,0,0,dpr,0,0);c.fillStyle='#1e4e86';c.fillRect(0,0,vw,vh);
   if(!G||!terrain)return;
+  const fdt=Math.min(.1,Math.max(0,time-(draw.lt||time)));draw.lt=time;
   const z=cam.z;c.setTransform(dpr*z,0,0,dpr*z,-cam.x*dpr*z,-cam.y*dpr*z);
   const x0=cam.x,y0=cam.y,x1=cam.x+vw/z,y1=cam.y+vh/z;
   const sx=Math.max(0,x0),sy=Math.max(0,y0),sw=Math.min(WW,x1)-sx,sh=Math.min(WH,y1)-sy;
@@ -1230,12 +1244,16 @@ function draw(time){
   if(UI.mode=='road'&&UI.rp){c.strokeStyle='#fff';c.lineWidth=3;c.setLineDash([6,5]);c.beginPath();UI.rp.forEach((n,k)=>k?c.lineTo(fx(n),py(n)):c.moveTo(fx(n),py(n)));c.stroke();c.setLineDash([])}
   // Figuren nach Zeilen sortieren
   const rows={};const put=(x,y,o)=>{const r=Math.max(0,Math.round((y-PADT)/TH));(rows[r]=rows[r]||[]).push(o);o.x=x;o.y=y};
-  for(const id in G.units){const u=G.units[id],p=unitPos(u);if(!p||p[0]<x0-20||p[0]>x1+20||p[1]<y0-20||p[1]>y1+30)continue;
-    const kn=u.role=='att'||u.role=='knight'||u.role=='home',wb=u.role=='worker'?G.blds[u.d]:null;
-    put(p[0],p[1],{o:u.o,kind:kn?'knight':u.role=='worker'?(wb?wb.type:'carrier'):u.role,carry:u.k=='c'&&u.g?u.g.t:null,mv:!(u.k=='c'&&u.st==0)&&!u.wait&&!(u.k=='f'&&u.t>u.T-1.2),work:!!u.wait||(u.k=='f'&&u.t>u.T-1.2),ph:u.id,dir:facing(u.id,p[0])})}
-  for(const id in G.blds){const b=G.blds[id],J=b.job;if(!J)continue;const f=J.ph==0?J.t/J.T:J.ph==1?1:1-J.t/J.T;
-    const x=fx(b.n)+(fx(J.n)-fx(b.n))*f,y=py(b.n)+(py(J.n)-py(b.n))*f;if(x<x0-20||x>x1+20)continue;
-    put(x,y+1,{o:b.o,kind:b.type,carry:J.ph==2?J.c:null,mv:J.ph!=1,work:J.ph==1,ph:b.id,dir:facing('j'+b.id,x)})}
+  for(const id in G.units){const u=G.units[id],p=unitPos(u);if(!p||p[0]<x0-30||p[0]>x1+30||p[1]<y0-30||p[1]>y1+40)continue;
+    const kn=u.role=='att'||u.role=='knight'||u.role=='home',wb=u.role=='worker'?G.blds[u.d]:null,A=anim(u.id,p[0],p[1],fdt),wk=u.wait?'fight':(u.k=='f'&&u.t>u.T-1.2)?'chop':false;
+    let al=1;if(u.k=='w'&&(u.role=='builder'||u.role=='worker'||u.role=='knight')){const rem=u.p.length-1-u.i;if(rem<.7)al=Math.max(0,rem/.7)}
+    put(A.x,A.y,{o:u.o,kind:kn?'knight':u.role=='worker'?(wb?wb.type:'carrier'):u.role,carry:u.k=='c'&&u.g?u.g.t:null,mv:wk?0:A.sp,work:wk,id:u.id,ph:A.ph,dir:A.ds,al})}
+  for(const id in G.blds){const b=G.blds[id];
+    if(!b.done&&b.bw==2){const x=fx(b.n),y=py(b.n);if(x>x0-30&&x<x1+30&&y>y0-30&&y<y1+40)put(x+13,y+4,{o:b.o,kind:'builder',mv:0,work:b.prog<1&&b.got.plank+b.got.stone>b.prog*(BD[b.type].c[0]+BD[b.type].c[1])+.01?'build':false,id:b.id,ph:0,dir:-1,al:1})}
+    const J=b.job;if(!J)continue;const f=J.ph==0?J.t/J.T:J.ph==1?1:1-J.t/J.T;
+    const x=fx(b.n)+(fx(J.n)-fx(b.n))*f,y=py(b.n)+(py(J.n)-py(b.n))*f;if(x<x0-30||x>x1+30)continue;
+    const A=anim('j'+b.id,x,y+1,fdt),wk=J.ph==1?({tree:'chop',stone:'chop',plant:'dig',fish:'fish',sow:'sow',harvest:'mow'})[J.a]:false;
+    put(A.x,A.y,{o:b.o,kind:b.type,carry:J.ph==2?J.c:null,mv:wk?0:A.sp,work:wk,id:b.id,ph:A.ph,dir:A.ds,al:Math.min(1,f/.14)})}
   for(const a of amb.an){if(a.x<x0-20||a.x>x1+20||a.y<y0-20||a.y>y1+20)continue;put(a.x,a.y,{an:a})}
   const aid=UI.aid&&z>=.7&&UI.mode!='road';
   for(let r=r0;r<=r1;r++){
@@ -1261,9 +1279,10 @@ function draw(time){
         for(let k=0;k<F.g.length;k++)drawGood(c,F.g[k].t,x-9+(k%4)*6,y+3+(k>>2)*5,.6)}
       const bid=G.bl[i];if(bid){const b=G.blds[bid];drawBld(c,b.type,x,y,PCOL[b.o],b.done?1:b.prog,time,BD[b.type].mil&&b.o==0&&b.done?b.g:undefined)}
     }
-    const us=rows[r];if(us)for(const u of us)if(u.an)drawAnimal(c,u.an,time);else drawMan(c,u.x,u.y,u.o,G.time,u.mv,u.kind,u.carry,u.dir,u.work,u.ph);
+    const us=rows[r];if(us)for(const u of us)if(u.an)drawAnimal(c,u.an,time);else{if(u.al<1)c.globalAlpha=u.al;drawMan(c,u.x,u.y,u.o,G.time,u.mv,u.kind,u.carry,u.dir,u.work,u.id,u.ph);c.globalAlpha=1}
   }
-  for(const f of fxs){const x=fx(f.n),y=py(f.n);if(f.k=='fire'){for(let k=0;k<7;k++){const p=(time*1.5+k/7)%1;c.fillStyle=`rgba(255,${110+k*20},30,${.8*(1-p)})`;c.beginPath();c.arc(x+Math.sin(k*2+p*6)*8,y-4-p*24,5*(1-p)+1,0,7);c.fill()}}
+  for(const f of fxs){const x=fx(f.n),y=py(f.n);if(f.k=='fall'){const q=1-f.t/1.5,an=Math.min(1,q/.6);c.save();c.globalAlpha=q>.7?Math.max(0,1-(q-.7)/.3):1;c.translate(x,y);c.rotate(f.s*an*an*1.45);drawTree(c,0,0,1,hash2(f.n,3,G.seed),0);c.restore();c.fillStyle='#8a5a2b';c.fillRect(x-1.6,y-2.5,3.2,2.5);c.fillStyle='#d9b077';c.beginPath();c.ellipse(x,y-2.5,1.6,.7,0,0,7);c.fill()}
+    else if(f.k=='fire'){for(let k=0;k<7;k++){const p=(time*1.5+k/7)%1;c.fillStyle=`rgba(255,${110+k*20},30,${.8*(1-p)})`;c.beginPath();c.arc(x+Math.sin(k*2+p*6)*8,y-4-p*24,5*(1-p)+1,0,7);c.fill()}}
     else{c.strokeStyle='#fff7c0';c.lineWidth=1.5;c.beginPath();for(let k=0;k<6;k++){const a=k+time*9;c.moveTo(x+Math.cos(a)*3,y-8+Math.sin(a)*3);c.lineTo(x+Math.cos(a)*9,y-8+Math.sin(a)*9)}c.stroke()}}
   for(const b of amb.birds){if(b.x<x0-40||b.x>x1+40||b.y<y0-60||b.y>y1+40)continue;const d=b.vx>0?1:-1,fl=Math.sin(time*(b.gull?7:11)+b.ph),gl=Math.sin(time*.7+b.ph)>.55?.25:1,w=fl*gl*3.2;
     c.fillStyle='rgba(0,0,0,.14)';c.beginPath();c.ellipse(b.x+10,b.y+36,4,1.5,0,0,7);c.fill();
